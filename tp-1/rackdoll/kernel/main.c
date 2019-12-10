@@ -51,34 +51,82 @@ void main_multiboot2(void *mb2)
 
 void printpgt(uint64_t cr3)
 {
-	uint64_t *p_val_64 = 0;
-	uint64_t val_64 = 0;
+	/*uint64_t *p_val_64 = 0;*/
+	/*uint64_t nb_0 = 0;*/
+
+	int* pml4 = cr3;
+	int* pml3 = cr3;
+	int* pml2 = cr3;
+	int* pml1 = cr3;
+
 	uint64_t pml4_index = 0;
-	/*uint64_t pml3_index = 0;*/
-	/*uint64_t pml2_index = 0;*/
-	/*uint64_t pml1_index = 0;*/
+	uint64_t pml3_index = 0;
+	uint64_t pml2_index = 0;
+	uint64_t pml1_index = 0;
 
 	uint64_t pml4_max = (1 << 8);
-	/*uint64_t pml3_max = (1 << 8);*/
-	/*uint64_t pml2_max;*/
-	/*uint64_t pml1_max;*/
+	uint64_t pml3_max = (1 << 8);
+	uint64_t pml2_max = (1 << 8);
+	uint64_t pml1_max = (1 << 8);
 
-	printk("\n Innuendo! \n");
-	printk("\n CR3 = %p\n", cr3);
-	uint64_t *p = cr3;
+	printk("\n CR3 = %p\n", pml4);
+	// TODO CEHCKER LA VALIDITE DE LA PAGE
+
+	// PML4
 	for (pml4_index = 0; pml4_index < pml4_max; pml4_index++)
 	{
-		if (pml4_index == 0)
-			p_val_64 = p;
+		if (*pml4 != 0)
+		{
+			pml3 = *pml4;
+			printk("\n PML4 OK [%p]\n ", pml3);
 
-		p++;
-		printk("\n val=%ld pointer=%p\n", *p, p);
+		}
+		pml4++;
 	}
 
-	printk("\n val=%ld pointer=%p\n", *p_val_64, p_val_64);
+	// PML3
+	pml3 =  (int)pml3 & 0xFFF000; // bit masking
+	for (pml3_index = 0; pml3_index < pml3_max; pml3_index++)
+	{
+		if (*pml3 != 0)
+		{
+			pml2 = *pml3;
+			printk("\n PML3 OK [%p]\n ", pml2);
+		}
+		pml3++;
+
+	}
+
+	// TODO CHECKER SI LA PAGE EST HUGE
+	// PML2
+	pml2 =  (int)pml2 & 0xFFF000; // bit masking
+	for (pml2_index = 0; pml2_index < pml2_max; pml2_index++)
+	{
+		// TODO CHECKER SI LA PAGE EST HUGE
+		if (*pml2 != 0 )
+		{
+			pml1 = *pml2;
+			printk("\n pml2 OK [%p]\n ", pml1);
+
+		}
+		// TODO CHECKER SI LA PAGE EST HUGE
+		// else ...
+		pml2++;
+	}
+
+	// PML1
+	pml1 =  (int)pml1 & 0xFFF000; // bit masking
+	for (pml1_index = 0; pml1_index < pml1_max; pml1_index++)
+	{
+		if (*pml1 != 0)
+		{
+			printk("\n pml1 OK [%p]=%ld\n ", pml1, *pml1);
+		}
+		pml1++;
+
+	}
 
 
-	printk("\n Master Of Puppets! \n");
 
 }
 
