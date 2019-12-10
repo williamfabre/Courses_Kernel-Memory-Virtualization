@@ -1,0 +1,16 @@
+# Object files
+*.o
+*.ko
+*.obj
+#*.elf
+*.bin
+
+# exec files
+*.x
+*.exe
+*.out
+
+#output unused
+simulation.txt
+*.log
+#*.txt

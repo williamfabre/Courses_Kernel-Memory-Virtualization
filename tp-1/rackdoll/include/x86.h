@@ -59,6 +59,26 @@
 #define RFLAGS_ID              (1ul << 21)
 
 
+// SOME MORE FUN
+/* lea eax, [var] — the value in var is placed in EAX. */
+// mov [0x12], ax ; Copie le contenu de ax dans la zone mémoire 0x12.
+// mov ah, [0x13] ; Copie le contenu de la zone mémoire 0x13 dans le registre ah.
+//
+
+
+//__asm__("movl\t%0, %1"
+
+        //: "=&r" (a)
+        //: "r" (b)
+        //:[> liste des modifications <]
+       //)
+//static inline void mov(uint64_t val_64)
+//{
+	//asm volatile ("mov %0, %1"
+			//: "rsp"
+			//: "r"(val_64));
+//}
+
 static inline void load_rsp(uint64_t rsp)
 {
 	asm volatile ("movq %0, %%rsp" : : "r" (rsp));
