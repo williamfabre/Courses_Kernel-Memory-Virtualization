@@ -7,7 +7,7 @@
 #define PHYSICAL_POOL_PAGES  64
 #define PHYSICAL_POOL_BYTES  (PHYSICAL_POOL_PAGES << 12)
 #define BITSET_SIZE          (PHYSICAL_POOL_PAGES >> 6)
-
+#define INDEX(vaddr, lvl)    (((((vaddr<<16)>>28)>>(lvl-1))<<54)>>54)
 
 extern __attribute__((noreturn)) void die(void);
 
@@ -15,7 +15,8 @@ static uint64_t bitset[BITSET_SIZE];
 
 static uint8_t pool[PHYSICAL_POOL_BYTES] __attribute__((aligned(0x1000)));
 
-
+// alloue une nouvelle page déjà mappée par une identité.
+// Le contenu de cette page est indéfini.
 paddr_t alloc_page(void)
 {
 	size_t i, j;
@@ -102,8 +103,37 @@ void free_page(paddr_t addr)
  */
 
 
+// mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
+// un espace d’une page pour la tâche ctx
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
+
+	paddr_t* cadre;
+	vaddr_t index_lvl4
+	vaddr_t index_lvl3
+	vaddr_t index_lvl2
+	vaddr_t index_lvl1
+
+
+	// recuperation de la table du ctx
+	paddr_t pml4 = ctx->pgt;
+	/*cadre = pml4;*/
+	/*printk("%s page %p \n", __func__, *cadre);*/
+
+	// calcule des index dans la table a partir de l'adresse virtuelle
+	index_lvl4 = INDEX(vaddr, 4);
+	index_lvl3 = INDEX(vaddr, 3);
+	index_lvl2 = INDEX(vaddr, 2);
+	index_lvl1 = INDEX(vaddr, 1);
+
+	printk("%s index lvl 4 %p \n", __func__, index_lvl4);
+	printk("%s index lvl 3 %p \n", __func__, index_lvl3);
+	printk("%s index lvl 2 %p \n", __func__, index_lvl2);
+	printk("%s index lvl 1 %p \n", __func__, index_lvl1);
+
+	
+
+
 }
 
 void load_task(struct task *ctx)

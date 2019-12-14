@@ -65,4 +65,27 @@ store cr3(void) qui retourne le contenu du registre CR3.
 		Met le contenu de <source> dans <dest>. Équivalent C: <dest>=<source>.
 		Ex: movl %esp, %ebp sauvegarde le pointeur de pile %esp dans le registre %ebp.
 		Ex: movl %eax, 12(%ebp) stocke le contenu de %eax dans les quatre octets commençant à %ebp+12.
-		Ex: movl (%ebx, %edi, 4), %eax lit le contenu de la case mémoire à l'adresse %ebx + 4*%edi, et le met dans %eax. (Imaginez que %ebx est l'adresse de début d'un tableau a, %edi est un index i, ceci stocke a[i] dans %eax.)
+
+
+## Exercice 2
+
+Dans cet exercice on implémente la fonction qui permet de mapper une adresse virtuelle sur une adresse
+physique. Par soucis de simplicité, on fera les suppositions suivantes :
+— Les niveaux intermédiaires de la table des pages sont tous mappés par une identité (l’adresse virtuelle
+est égale à l’adresse physique).
+— Tous les nouveaux mappings seront faits avec les droits utilisateurs (bit 2) et en écriture (bit 1).
+— On ne cherche pas à gérer les huge pages.
+— Si un mapping est demandé pour une adresse virtuelle α, l’adresse virtuelle α n’est pas déjà mappée.
+Vous avez à votre disposition la fonction paddr t alloc page() qui alloue une nouvelle page déjà mappée
+par une identité. Le contenu de cette page est indéfini.
+
+###Question 1
+Étant donné une adresse virtuelle vaddr à mapper et la hauteur courante dans la table des pages lvl
+(avec lvl = 4 pour le niveau indiqué dans le CR3), donnez la formule qui indique l’index de l’entrée
+correspondante dans le niveau courant.
+
+```c
+
+#define INDEX(vaddr, lvl)    (((((vaddr<<16)>>28)>>(lvl-1))<<54)>>54)
+
+```

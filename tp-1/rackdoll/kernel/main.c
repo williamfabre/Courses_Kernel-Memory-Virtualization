@@ -11,7 +11,7 @@
 
 
 void tabulate_per_level(int lvl);
-paddr_t mask(paddr_t* pml);
+void mask(paddr_t* pml);
 void print_pgt(paddr_t pml, uint8_t lvl);
 
 __attribute__((noreturn))
@@ -29,6 +29,7 @@ __attribute__((noreturn))
 void main_multiboot2(void *mb2)
 {
 	uint64_t cr3;
+	struct task fake;
 
 	clear();                                     /* clear the VGA screen */
 	printk("Rackdoll OS\n-----------\n\n");                 /* greetings */
@@ -45,6 +46,10 @@ void main_multiboot2(void *mb2)
 	/*cr3 = 0xFFFFFFFFFFFFFFFF;*/
 	print_pgt(cr3, 4);                                   //print page table
 
+	paddr_t new;
+	fake.pgt = store_cr3();
+	new = alloc_page();
+	map_page(&fake, 0x201000, new);
 
 
 	load_tasks(mb2);                         /* load the tasks in memory */
@@ -65,11 +70,11 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 	paddr_t* cadre;
 	mask(&pml);
 	//ecrasement de l'adresse du pointeur
-	cadre = pml;
+	cadre = (paddr_t*)pml;
 
-	uint32_t size = (1 << 8);
+	uint32_t size = (1 << 9);
 
-	for (int i=0; i<size; i++){
+	for (uint32_t i=0; i<size; i++){
 		//presence d'information dans ce cadre de page
 		if (*cadre & 1){
 			if (lvl == 4 || lvl == 3){
@@ -100,7 +105,7 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 	return;
 }
 
-paddr_t mask(paddr_t* pml)
+void mask(paddr_t* pml)
 {
 	// correction du probleme de depassement du shift avec un uint64_t
 	unsigned long long val = (1ULL << 63);
