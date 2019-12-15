@@ -12,10 +12,6 @@
 #include <x86.h>                                    /* access to cr3 and cr2 */
 
 
-/*void tabulate_per_level(int lvl);*/
-/*void mask(paddr_t* pml);*/
-/*void print_pgt(paddr_t pml, uint8_t lvl);*/
-void pgt_to_human(uint64_t tpe);
 void print_pgt(paddr_t pml, uint8_t lvl);
 
 __attribute__((noreturn))
