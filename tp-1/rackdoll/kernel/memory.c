@@ -102,10 +102,10 @@ void free_page(paddr_t addr)
  */
 
 // THANKS TO SOME CODE THAT I CORRECTED FROM GITHUB
+// mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
+// un espace d’une page pour la tâche ctx
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
-	uint64_t addr_mask = 0x0007FFFFFFFFF800;
-
 	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
 	int offset, i;
 
@@ -121,11 +121,10 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		if (!cadre || !check_1bit(*cadre, 1))// if empty or invalid
 		{
 			printk("alloc needed\n");
-			/*printk("%s *cadre lvl%d %p \n", __func__, i, *cadre);*/
-			memcpy(cadre, (uint64_t*)alloc_page(), 8);
+			*cadre = alloc_page();
 			set_usr(cadre); // set right to value pointed by cadre
 		}
-		cadre = (uint64_t*) (*cadre & addr_mask);
+		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 		printk("%s next cadre lvl%d %p \n", __func__, i-1, cadre);
 	}
 
@@ -134,100 +133,9 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	offset = INDEX(vaddr, i);
 	cadre = cadre + offset;
 	set_usr(&paddr);
-	memcpy(cadre, &paddr, 8);
+	*cadre = paddr;
 	printk("%s pointee %p \n", __func__, cadre);
 	printk("%s alloc done (pointed) %p \n", __func__, *cadre);
-}
-
-// mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
-// un espace d’une page pour la tâche ctx
-void map_page2(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
-{
-	paddr_t *cadre;
-	paddr_t tmp;
-
-	paddr_t pml4;
-	paddr_t pml3;
-	paddr_t pml2;
-	paddr_t pml1;
-
-	paddr_t pml4_value;
-	paddr_t pml3_value;
-	paddr_t pml2_value;
-	paddr_t pml1_value;
-
-	vaddr_t index_lvl4;
-	vaddr_t index_lvl3;
-	vaddr_t index_lvl2;
-	vaddr_t index_lvl1;
-
-	// recuperation de la table du ctx
-	pml4 = ctx->pgt;
-
-	// recuperation de l'adresse de pml3, pml2, pml1
-	pml3 = 0x105000;
-	pml2 = 0x106000;
-	pml1 = 0x107000;
-
-	printk("%s virtual address %p \n", __func__, vaddr);
-	printk("%s physical address %p \n", __func__, paddr);
-	/*printk("%s adress lvl 4 %p \n", __func__, pml4);*/
-	/*printk("%s adress lvl 3 %p \n", __func__, pml3);*/
-	/*printk("%s adress lvl 2 %p \n", __func__, pml2);*/
-	/*printk("%s adress lvl 1 %p \n", __func__, pml1);*/
-
-	// calcule des index dans la table a partir de l'adresse virtuelle
-	index_lvl4 = INDEX(vaddr, 4);
-	index_lvl3 = INDEX(vaddr, 3);
-	index_lvl2 = INDEX(vaddr, 2);
-	index_lvl1 = INDEX(vaddr, 1);
-
-	printk("%s index lvl 4 %p \n", __func__, index_lvl4);
-	printk("%s index lvl 3 %p \n", __func__, index_lvl3);
-	printk("%s index lvl 2 %p \n", __func__, index_lvl2);
-	printk("%s index lvl 1 %p \n", __func__, index_lvl1);
-
-	pml4_value = pml3+index_lvl3;
-	set_1bit(&pml4_value, 0);
-	set_1bit(&pml4_value, 1);
-	set_1bit(&pml4_value, 2);
-
-	pml3_value = pml2+index_lvl2;
-	set_1bit(&pml3_value, 0);
-	set_1bit(&pml3_value, 1);
-	set_1bit(&pml3_value, 2);
-
-	pml2_value = pml1+index_lvl1;
-	set_1bit(&pml2_value, 0);
-	set_1bit(&pml2_value, 1);
-	set_1bit(&pml2_value, 2);
-
-	pml1_value = paddr;
-
-	printk("%s value lvl 4 %p \n", __func__, pml4_value);
-	printk("%s value lvl 3 %p \n", __func__, pml3_value);
-	printk("%s value lvl 2 %p \n", __func__, pml2_value);
-	printk("%s value lvl 1 %p \n", __func__, pml1_value);
-
-	cadre = (paddr_t*)pml4+index_lvl4;
-	*cadre = pml4_value;
-	printk("%s verification value lvl 4 %p \n", __func__, *cadre);
-
-	cadre = (paddr_t*)pml3+index_lvl3;
-	*cadre = pml3_value;
-	printk("%s verification value lvl 3 %p \n", __func__, *cadre);
-
-	cadre = (paddr_t*)pml2+index_lvl2;
-	*cadre = pml2_value;
-	printk("%s verification value lvl 2 %p \n", __func__, *cadre);
-
-	cadre = (paddr_t*)pml1+index_lvl1;
-	*cadre = pml1_value;
-	printk("%s verification value lvl 1 %p \n", __func__, *cadre);
-}
-
-void load_task(struct task *ctx)
-{
 }
 
 void set_task(struct task *ctx)

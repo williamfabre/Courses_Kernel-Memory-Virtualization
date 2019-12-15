@@ -3,6 +3,7 @@
 
 // retrouve l'index pour une adresse virtuel et un niveau donne.
 #define INDEX(vaddr, lvl)    (((((vaddr<<16)>>28)>>((lvl-1))*9)<<55)>>55)
+#define ADDR_MASK (0x0007FFFFFFFFF800)
 
 // invalide le invalieme bit de l'adresse pointee par addr
 void mask_1bit(paddr_t* addr, int inval)
