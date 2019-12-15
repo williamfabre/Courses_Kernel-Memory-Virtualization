@@ -1,5 +1,8 @@
 #include <idt.h>                            /* see there for interrupt names */
+
+//inclusion de bit_manipulation par inclusion de memory // dependance chiante
 #include <memory.h>                               /* physical page allocator */
+
 #include <printk.h>                      /* provides printk() and snprintk() */
 #include <string.h>                                     /* provides memset() */
 #include <syscall.h>                         /* setup system calls for tasks */
@@ -7,7 +10,6 @@
 #include <types.h>              /* provides stdint and general purpose types */
 #include <vga.h>                                         /* provides clear() */
 #include <x86.h>                                    /* access to cr3 and cr2 */
-
 
 
 void tabulate_per_level(int lvl);
@@ -44,12 +46,14 @@ void main_multiboot2(void *mb2)
 	// EXERCICE 2
 	cr3 = store_cr3();
 	/*cr3 = 0xFFFFFFFFFFFFFFFF;*/
-	print_pgt(cr3, 4);                                   //print page table
+	/*print_pgt(cr3, 4);                                   //print page table*/
 
 	paddr_t new;
 	fake.pgt = store_cr3();
 	new = alloc_page();
 	map_page(&fake, 0x201000, new);
+
+	print_pgt(cr3, 4);                                   //print page table
 
 
 	load_tasks(mb2);                         /* load the tasks in memory */
@@ -68,7 +72,7 @@ void tabulate_per_level(int lvl)
 void print_pgt(paddr_t pml, uint8_t lvl)
 {
 	paddr_t* cadre;
-	mask(&pml);
+	mask_63_11downto0(&pml);
 	//ecrasement de l'adresse du pointeur
 	cadre = (paddr_t*)pml;
 
@@ -76,7 +80,7 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 
 	for (uint32_t i=0; i<size; i++){
 		//presence d'information dans ce cadre de page
-		if (*cadre & 1){
+		if (check_1bit((paddr_t)*cadre, 1)){
 			if (lvl == 4 || lvl == 3){
 				tabulate_per_level((lvl-4));
 				printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);
@@ -84,7 +88,7 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 			}
 			if (lvl == 2){
 				// HUGE PAGE
-				if (*cadre & (1<<7)){
+				if (check_1bit((paddr_t)*cadre, 7)){
 					tabulate_per_level((lvl-4));
 					printk("%s HUGE page data is pml%d[%d]=%p\n", __func__, lvl, i, *cadre);
 				}else{
@@ -105,16 +109,4 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 	return;
 }
 
-void mask(paddr_t* pml)
-{
-	// correction du probleme de depassement du shift avec un uint64_t
-	unsigned long long val = (1ULL << 63);
 
-	// bit masking bit 63
-	*pml &= ~val;
-
-	// bit masking bits [11 downto 0]
-	for (uint64_t i = 0; i < 12; i++){
-		*pml &= ~(1<<(i));
-	}
-}

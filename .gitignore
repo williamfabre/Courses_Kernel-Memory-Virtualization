@@ -2,9 +2,10 @@
 *.o
 *.ko
 *.obj
-#*.elf
+*.elf
 *.bin
-
+*.iso
+*.cfg
 # exec files
 *.x
 *.exe
