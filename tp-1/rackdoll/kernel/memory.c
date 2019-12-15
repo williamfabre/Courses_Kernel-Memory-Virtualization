@@ -102,7 +102,7 @@ void free_page(paddr_t addr)
  */
 
 // THANKS TO SOME CODE THAT I CORRECTED FROM GITHUB
-// mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
+//mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
 // un espace d’une page pour la tâche ctx
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
@@ -136,6 +136,10 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	*cadre = paddr;
 	printk("%s pointee %p \n", __func__, cadre);
 	printk("%s alloc done (pointed) %p \n", __func__, *cadre);
+}
+
+void load_task(struct task *ctx)
+{
 }
 
 void set_task(struct task *ctx)
