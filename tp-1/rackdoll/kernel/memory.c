@@ -101,66 +101,50 @@ void free_page(paddr_t addr)
  * The user processes have to explicitely map them in order to use them.
  */
 
-/*paddr_t find_pmli(paddr_t pml4, int lvl)*/
-/*{*/
-	/*paddr_t *cadre;*/
+// THANKS TO SOME CODE THAT I CORRECTED FROM GITHUB
+void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
+{
+	uint64_t addr_mask = 0x0007FFFFFFFFF800;
 
-	/*paddr_t pml3 = 0;*/
-	/*paddr_t pml2 = 0;*/
-	/*paddr_t pml1 = 0;*/
+	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
+	int offset, i;
 
-	/*// recuperation de l'adresse de pml3*/
-	/*cadre = pml4;*/
-	/*for (int i=0; i < (1<<9); i++){*/
-		/*pml3 = *cadre;*/
-		/*if (check_1bit(pml3, 1)){*/
-			/*printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);*/
-			/*break;*/
-		/*}*/
-		/*cadre++;*/
-	/*}*/
-	/*if (lvl == 3){*/
-		/*mask_63_11downto0(&pml3);*/
-		/*return pml3;*/
-	/*}*/
+	printk("\nMapping v_addr %p to p_addr %p...\n", vaddr ,paddr);
 
-	/*// recuperation de l'adresse de pml2*/
-	/*cadre = pml3;*/
-	/*for (int i=0; i < (1<<9); i++){*/
-		/*pml2 = *cadre;*/
-		/*if (check_1bit(pml2, 1)){*/
-			/*printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);*/
-			/*break;*/
-		/*}*/
-		/*cadre++;*/
-	/*}*/
-	/*if (lvl == 2){*/
-		/*mask_63_11downto0(&pml2);*/
-		/*return pml2;*/
-	/*}*/
+	for (i = 4; i > 0; --i)
+	{
+		offset = INDEX(vaddr, i);
+		printk("%s offset lvl%d %p \n", __func__, i, offset);
+		printk("%s cadre without offset lvl%d %p \n", __func__, i, cadre);
+		cadre = cadre + offset;
+		printk("%s cadre with offset lvl%d %p \n", __func__, i, cadre);
+		if (!cadre || !check_1bit(*cadre, 1))// if empty or invalid
+		{
+			printk("alloc needed\n");
+			/*printk("%s *cadre lvl%d %p \n", __func__, i, *cadre);*/
+			memcpy(cadre, (uint64_t*)alloc_page(), 8);
+			set_usr(cadre); // set right to value pointed by cadre
+		}
+		cadre = (uint64_t*) (*cadre & addr_mask);
+		printk("%s next cadre lvl%d %p \n", __func__, i-1, cadre);
+	}
 
-	/*// recuperation de l'adresse de pml1*/
-	/*cadre = pml2;*/
-	/*for (int i=0; i < (1<<9); i++){*/
-		/*pml1 = *cadre;*/
-		/*if (check_1bit(pml1, 1)){*/
-			/*printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);*/
-			/*break;*/
-		/*}*/
-		/*cadre++;*/
-	/*}*/
-	/*if (lvl == 1){*/
-		/*mask_63_11downto0(&pml1);*/
-		/*return pml1;*/
-	/*}*/
-/*}*/
+
+	printk("\n%s Gestion lvl%d %p \n", __func__, i, cadre);
+	offset = INDEX(vaddr, i);
+	cadre = cadre + offset;
+	set_usr(&paddr);
+	memcpy(cadre, &paddr, 8);
+	printk("%s pointee %p \n", __func__, cadre);
+	printk("%s alloc done (pointed) %p \n", __func__, *cadre);
+}
 
 // mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
 // un espace d’une page pour la tâche ctx
-void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
+void map_page2(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
-
 	paddr_t *cadre;
+	paddr_t tmp;
 
 	paddr_t pml4;
 	paddr_t pml3;
@@ -181,19 +165,16 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	pml4 = ctx->pgt;
 
 	// recuperation de l'adresse de pml3, pml2, pml1
-	/*pml3 = find_pmli(pml4, 3);*/
-	/*pml2 = find_pmli(pml4, 2);*/
-	/*pml1 = find_pmli(pml4, 1);*/
-	// faire le calcule avec le nombre d'entrees par table + adresse de
-	// base?
 	pml3 = 0x105000;
 	pml2 = 0x106000;
 	pml1 = 0x107000;
 
-	printk("%s adress lvl 4 %p \n", __func__, pml4);
-	printk("%s adress lvl 3 %p \n", __func__, pml3);
-	printk("%s adress lvl 2 %p \n", __func__, pml2);
-	printk("%s adress lvl 1 %p \n", __func__, pml1);
+	printk("%s virtual address %p \n", __func__, vaddr);
+	printk("%s physical address %p \n", __func__, paddr);
+	/*printk("%s adress lvl 4 %p \n", __func__, pml4);*/
+	/*printk("%s adress lvl 3 %p \n", __func__, pml3);*/
+	/*printk("%s adress lvl 2 %p \n", __func__, pml2);*/
+	/*printk("%s adress lvl 1 %p \n", __func__, pml1);*/
 
 	// calcule des index dans la table a partir de l'adresse virtuelle
 	index_lvl4 = INDEX(vaddr, 4);
@@ -207,36 +188,42 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	printk("%s index lvl 1 %p \n", __func__, index_lvl1);
 
 	pml4_value = pml3+index_lvl3;
+	set_1bit(&pml4_value, 0);
 	set_1bit(&pml4_value, 1);
 	set_1bit(&pml4_value, 2);
 
 	pml3_value = pml2+index_lvl2;
+	set_1bit(&pml3_value, 0);
 	set_1bit(&pml3_value, 1);
 	set_1bit(&pml3_value, 2);
 
 	pml2_value = pml1+index_lvl1;
-	set_1bit(&pml3_value, 1);
-	set_1bit(&pml3_value, 2);
+	set_1bit(&pml2_value, 0);
+	set_1bit(&pml2_value, 1);
+	set_1bit(&pml2_value, 2);
 
-	pml1_value = 0x42;
+	pml1_value = paddr;
 
 	printk("%s value lvl 4 %p \n", __func__, pml4_value);
 	printk("%s value lvl 3 %p \n", __func__, pml3_value);
 	printk("%s value lvl 2 %p \n", __func__, pml2_value);
 	printk("%s value lvl 1 %p \n", __func__, pml1_value);
 
-
-	cadre = pml4+index_lvl4;
+	cadre = (paddr_t*)pml4+index_lvl4;
 	*cadre = pml4_value;
+	printk("%s verification value lvl 4 %p \n", __func__, *cadre);
 
-	cadre = pml3+index_lvl3;
+	cadre = (paddr_t*)pml3+index_lvl3;
 	*cadre = pml3_value;
+	printk("%s verification value lvl 3 %p \n", __func__, *cadre);
 
-	cadre = pml2+index_lvl2;
+	cadre = (paddr_t*)pml2+index_lvl2;
 	*cadre = pml2_value;
+	printk("%s verification value lvl 2 %p \n", __func__, *cadre);
 
-	cadre = pml1+index_lvl1;
+	cadre = (paddr_t*)pml1+index_lvl1;
 	*cadre = pml1_value;
+	printk("%s verification value lvl 1 %p \n", __func__, *cadre);
 }
 
 void load_task(struct task *ctx)

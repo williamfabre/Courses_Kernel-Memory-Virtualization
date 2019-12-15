@@ -12,8 +12,10 @@
 #include <x86.h>                                    /* access to cr3 and cr2 */
 
 
-void tabulate_per_level(int lvl);
-void mask(paddr_t* pml);
+/*void tabulate_per_level(int lvl);*/
+/*void mask(paddr_t* pml);*/
+/*void print_pgt(paddr_t pml, uint8_t lvl);*/
+void pgt_to_human(uint64_t tpe);
 void print_pgt(paddr_t pml, uint8_t lvl);
 
 __attribute__((noreturn))
@@ -46,13 +48,15 @@ void main_multiboot2(void *mb2)
 	// EXERCICE 2
 	cr3 = store_cr3();
 	/*cr3 = 0xFFFFFFFFFFFFFFFF;*/
-	/*print_pgt(cr3, 4);                                   //print page table*/
+	print_pgt(cr3, 4);                                   //print page table
 
 	paddr_t new;
 	fake.pgt = store_cr3();
 	new = alloc_page();
 	map_page(&fake, 0x201000, new);
-
+	vaddr_t value = 0xFFFFFFFFFFFFFFFF;
+	vaddr_t *cadre = 0x201000;
+	*cadre = value;
 	print_pgt(cr3, 4);                                   //print page table
 
 
@@ -108,5 +112,46 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 
 	return;
 }
+// SOME CODE FROM https://github.com/NicolasGtn/nmv/blob/master/tp_virtual_mem/tp-1/rackdoll/kernel
+/*void pgt_to_human(uint64_t tpe)*/
+/*{*/
+	/*printk("##############################\n");*/
+	/*printk("Page addr: %p\n", tpe & 0x0007FFFFFFFFF800);*/
+	/*printk("NX: %c\n", tpe & 0x8000000000000000 ? '1': '0');*/
+	/*printk("G: %c\n", tpe & 0x0000000000000100 ? '1': '0');*/
+	/*printk("PS: %c\n", tpe & 0x0000000000000080 ? '1': '0');*/
+	/*printk("D: %c\n", tpe & 0x0000000000000040 ? '1': '0');*/
+	/*printk("A: %c\n", tpe & 0x0000000000000020 ? '1': '0');*/
+	/*printk("PCD: %c\n", tpe & 0x0000000000000010 ? '1': '0');*/
+	/*printk("PWT: %c\n", tpe & 0x0000000000000008 ? '1': '0');*/
+	/*printk("U/S: %c\n", tpe & 0x0000000000000004 ? '1': '0');*/
+	/*printk("R/W: %c\n", tpe & 0x0000000000000002 ? '1': '0');*/
+	/*printk("P: %c\n", tpe & 0x0000000000000001 ? '1': '0');*/
+	/*printk("##############################\n");*/
+/*}*/
 
+/*void print_pgt(paddr_t pml, uint8_t lvl)*/
+/*{*/
+	/*uint64_t *page_entry = (uint64_t*)pml;*/
+	/*printk("PML%d -> %p\n", lvl, page_entry);*/
+	/*int i;*/
+	/*paddr_t next_pml;*/
+	
+	/*for(i = 0 ; i<512 ; ++i)*/
+	/*{*/
+		/*if(*page_entry & 0x0000000000000001)		[> if page is valid <]*/
+		/*{*/
+			/*next_pml = *page_entry & 0x0007FFFFFFFFF800;*/
 
+			/*if(*page_entry & 0x0000000000000080)	[> if huge page <]*/
+				/*printk("huge page found -> %p\n", next_pml);*/
+
+			/*else if(lvl == 1)						[> if last level <]*/
+				/*printk("Page found -> %p\n", next_pml);*/
+
+			/*else*/
+				/*print_pgt(next_pml, --lvl);*/
+		/*}*/
+		/*page_entry++;*/
+	/*}*/
+/*}*/

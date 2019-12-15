@@ -27,47 +27,47 @@ void printpgt_uint64(uint64_t* pmlx, int layer, int iterations)
 
 
 // HAVING FUN WITH SOME FUNCTIONS
-/*for (pml4_index = 0; pml4_index < pml4_max; pml4_index++)*/
-/*{*/
-/*load_rsp(cr3);	// place la valeur dans rsp*/
-/*mov(val_64);			// lit la valeur en memoire*/
-/*val_64 = store_rsp();		// place la valeur dans rsp*/
+for (pml4_index = 0; pml4_index < pml4_max; pml4_index++)
+{
+load_rsp(cr3);	// place la valeur dans rsp
+mov(val_64);			// lit la valeur en memoire
+val_64 = store_rsp();		// place la valeur dans rsp
 
-/*printk("\n test 1 PML4 pointer=%p value=%p\n", cr3, val_64);*/
-/*mov(val_64);			// lit la valeur en memoire*/
-/*val_64 = store_rsp();*/
-/*printk("\n test 2 PML3 pointerbase=%p value=%p\n", val_64, val_64);*/
-/*printk("\n test 2 PML4 pointer=%p value=%d\n", cr3, val_64);*/
-/*}*/
+printk("\n test 1 PML4 pointer=%p value=%p\n", cr3, val_64);
+mov(val_64);			// lit la valeur en memoire
+val_64 = store_rsp();
+printk("\n test 2 PML3 pointerbase=%p value=%p\n", val_64, val_64);
+printk("\n test 2 PML4 pointer=%p value=%d\n", cr3, val_64);
+}
 
-/*for (pml3_index = 0; pml3_index < pml3_max; pml3_index++)*/
-/*{*/
-/*load_rsp(val_64);		// place la valeur dans rsp*/
-/*mov(val_64);			// lit la valeur en memoire*/
-/*val_64 = store_rsp();*/
+for (pml3_index = 0; pml3_index < pml3_max; pml3_index++)
+{
+load_rsp(val_64);		// place la valeur dans rsp
+mov(val_64);			// lit la valeur en memoire
+val_64 = store_rsp();
 
-/*printk("\n test 2 PML3 pointerbase=%p value=%p\n", val_64, val_64);*/
-/*}*/
+printk("\n test 2 PML3 pointerbase=%p value=%p\n", val_64, val_64);
+}
 
-// SOME MORE FUN
-/* lea eax, [var] — the value in var is placed in EAX. */
-// mov [0x12], ax ; Copie le contenu de ax dans la zone mémoire 0x12.
-// mov ah, [0x13] ; Copie le contenu de la zone mémoire 0x13 dans le registre ah.
-//
+ SOME MORE FUN
+ lea eax, [var] — the value in var is placed in EAX. 
+ mov [0x12], ax ; Copie le contenu de ax dans la zone mémoire 0x12.
+ mov ah, [0x13] ; Copie le contenu de la zone mémoire 0x13 dans le registre ah.
 
 
-//__asm__("movl\t%0, %1"
 
-	//: "=&r" (a)
-	//: "r" (b)
-	//:[> liste des modifications <]
-       //)
-//static inline void mov(uint64_t val_64)
-//{
-	//asm volatile ("mov %0, %1"
-			//: "rsp"
-			//: "r"(val_64));
-//}
+__asm__("movl\t%0, %1"
+
+	: "=&r" (a)
+	: "r" (b)
+	:[> liste des modifications <]
+       )
+static inline void mov(uint64_t val_64)
+{
+	asm volatile ("mov %0, %1"
+			: "rsp"
+			: "r"(val_64));
+}
 
 // version recurssive
 void printpgt(uint64_t cr3)
@@ -133,58 +133,58 @@ void printpgt_rec(paddr_t pmlx, int layer, int iterations)
 	printpgt_rec(pmlx, layer, iterations);
 
 
-	/*paddr_t *pmlx_pointer = pmlx;*/
-	/*paddr_t *pointed;*/
+	paddr_t *pmlx_pointer = pmlx;
+	paddr_t *pointed;
 
-	/*// fin du tableau*/
-	/*if( iterations == 0)*/
-	/*{*/
-	/*print_tab_layer(layer);*/
-	/*printk("ending layer %d\n", layer);*/
-	/*return;*/
-	/*}*/
+	// fin du tableau
+	if( iterations == 0)
+	{
+	print_tab_layer(layer);
+	printk("ending layer %d\n", layer);
+	return;
+	}
 
-	/*// derniere couche (page normale 4KO)*/
-	/*if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER*/
-	/*&& layer == 1)					// NORMAL PAGE*/
-	/*{*/
-	/*[>print_tab_layer(layer);<]*/
-	/*[>printk("layer %d => accessing normal PAGE= %d\n", layer,  *pmlx_pointer);<]*/
-	/*}*/
+	// derniere couche (page normale 4KO)
+	if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER
+	&& layer == 1)					// NORMAL PAGE
+	{
+	[>print_tab_layer(layer);<]
+	[>printk("layer %d => accessing normal PAGE= %d\n", layer,  *pmlx_pointer);<]
+	}
 
-	/*// HUGE PAGE (2mo)*/
-	/*if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER*/
-	/*&& layer == 2					// LAYER 2*/
-	/*&& CHECK_BIT((int)pmlx_pointer, 7))		// HUGE PAGE*/
-	/*{*/
-	/*print_tab_layer(layer);*/
-	/*printk("layer %d => accessing HUGE PAGE= %d\n", layer, *pmlx_pointer);*/
-	/*}*/
+	// HUGE PAGE (2mo)
+	if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER
+	&& layer == 2					// LAYER 2
+	&& CHECK_BIT((int)pmlx_pointer, 7))		// HUGE PAGE
+	{
+	print_tab_layer(layer);
+	printk("layer %d => accessing HUGE PAGE= %d\n", layer, *pmlx_pointer);
+	}
 
-	/*// valide (presence)*/
-	/*if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER*/
-	/*&& layer == 3 || layer == 4)*/
-	/*{*/
-	/*print_tab_layer(layer);*/
-	/*pointed = *pmlx_pointer;*/
-
-
-	/*printk("layer %d => %p\n", layer, pmlx_pointer);*/
-
-	/*pointed = (int)*pmlx_pointer & 0xFFF000; // bit masking*/
-
-	/*print_tab_layer(layer);*/
-	/*printk("layer %d => accessing = %p\n", layer,  pointed);*/
+	// valide (presence)
+	if (CHECK_BIT((int)pmlx_pointer, 0)			// VALID POINTER
+	&& layer == 3 || layer == 4)
+	{
+	print_tab_layer(layer);
+	pointed = *pmlx_pointer;
 
 
-	/*layer = layer - 1;*/
+	printk("layer %d => %p\n", layer, pmlx_pointer);
 
-	/*printpgt_rec((uint64_t)pointed, layer, 256);*/
-	/*} else {*/
-	/*pmlx = pmlx + 1;*/
-	/*iterations = iterations - 1;*/
-	/*printpgt_rec(pmlx, layer, iterations);*/
-	/*}*/
+	pointed = (int)*pmlx_pointer & 0xFFF000; // bit masking
+
+	print_tab_layer(layer);
+	printk("layer %d => accessing = %p\n", layer,  pointed);
+
+
+	layer = layer - 1;
+
+	printpgt_rec((uint64_t)pointed, layer, 256);
+	} else {
+	pmlx = pmlx + 1;
+	iterations = iterations - 1;
+	printpgt_rec(pmlx, layer, iterations);
+	}
 }
 
 // version iterative
@@ -264,4 +264,58 @@ void printpgt_test(uint64_t cr3)
 
 	}
 
+}
+
+paddr_t find_pmli(paddr_t pml4, int lvl)
+{
+	paddr_t *cadre;
+
+	paddr_t pml3 = 0;
+	paddr_t pml2 = 0;
+	paddr_t pml1 = 0;
+
+	// recuperation de l'adresse de pml3
+	cadre = pml4;
+	for (int i=0; i < (1<<9); i++){
+		pml3 = *cadre;
+		if (check_1bit(pml3, 1)){
+			printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);
+			break;
+		}
+		cadre++;
+	}
+	if (lvl == 3){
+		mask_63_11downto0(&pml3);
+		return pml3;
+	}
+
+	// recuperation de l'adresse de pml2
+	cadre = pml3;
+	for (int i=0; i < (1<<9); i++){
+		pml2 = *cadre;
+		if (check_1bit(pml2, 1)){
+			printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);
+			break;
+		}
+		cadre++;
+	}
+	if (lvl == 2){
+		mask_63_11downto0(&pml2);
+		return pml2;
+	}
+
+	// recuperation de l'adresse de pml1
+	cadre = pml2;
+	for (int i=0; i < (1<<9); i++){
+		pml1 = *cadre;
+		if (check_1bit(pml1, 1)){
+			printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);
+			break;
+		}
+		cadre++;
+	}
+	if (lvl == 1){
+		mask_63_11downto0(&pml1);
+		return pml1;
+	}
 }
