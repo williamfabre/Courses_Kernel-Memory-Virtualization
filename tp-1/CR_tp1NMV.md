@@ -79,7 +79,7 @@ est égale à l’adresse physique).
 Vous avez à votre disposition la fonction paddr t alloc page() qui alloue une nouvelle page déjà mappée
 par une identité. Le contenu de cette page est indéfini.
 
-###Question 1
+### Question 1
 Étant donné une adresse virtuelle vaddr à mapper et la hauteur courante dans la table des pages lvl
 (avec lvl = 4 pour le niveau indiqué dans le CR3), donnez la formule qui indique l’index de l’entrée
 correspondante dans le niveau courant.
@@ -89,3 +89,52 @@ correspondante dans le niveau courant.
 #define INDEX(vaddr, lvl)    (((((vaddr<<16)>>28)>>(lvl-1))<<54)>>54)
 
 ```
+### Qestion 2
+(voir code)
+
+### Question 3
+il faut faire xp/8g @physique pour avoir la reponse.
+
+## Exercice 3
+
+### Question 1
+A cette étape du TP, l’exécution de Rackdoll doit afficher sur le moniteur qu’une faute de page se produit
+à l’adresse virtuelle 0x2000000030. Étant donné le modèle mémoire, indiquez ce qui provoque la faute de
+page.
+
+```  c
+
+//+----------------------+ 0x00007fffffffffff	140To	= 140 737 488 355 327 octets
+//| User                 |
+//| (text + data + heap) | ERREUR		0x20000000030	= 2 199 023 255 600 octets
+//+----------------------+ 0x2000000000	2To=2x2^40	= 2 199 023 255 552 octets
+
+```
+
+### Question 2
+La première étape de la création d’une nouvelle tâche en mémoire est de dériver la table des pages courante en
+une nouvelle table des pages. Expliquez quelles plages d’adresses de la table courante doivent être conservées
+dans la nouvelle table et pourquoi.
+Une tâche utilisateur ctx est constituée de deux parties :
+— Le payload situé dans la mémoire physique entre ctx->load paddr et ctx->load end paddr qui
+contient le code et les données.
+— Le bss qui doit commencer en espace virtuel immédiatement après le payload et s’arrêter à l’adresse
+virtuelle ctx->bss end vaddr.
+On rappelle que le bss est une zone qui doit être initialisée à zero au lancement d’un tâche. Il est possible
+que certaines tâches aient un bss vide.
+
+
+### Question 3
+Donnez les adresses virtuelles de début et de fin du payload et du bss d’une tâche, calculées en fonction du
+modèle mémoire et des champs d’une tâche ctx.
+
+
+### Question 4
+Implémentez la fonction void load task(struct task *ctx) qui initialise une nouvelle tâche en
+mémoire sans toutefois charger sa table des pages dans le CR3.
+Question 5
+
+
+### Question 5
+Implémentez la fonction void set task(struct task *ctx) qui charge une nouvelle tâche en mémoire
+en modifiant le CR3.
