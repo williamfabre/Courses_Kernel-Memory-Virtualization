@@ -64,28 +64,28 @@ void free_page(paddr_t addr)
 /*
  * Memory model for Rackdoll OS
  *
- * +----------------------+ 0xffffffffffffffff
+ * +----------------------+++0xffffffffffffffff
  * | Higher half          |
  * | (unused)             |
- * +----------------------+ 0xffff800000000000	18Pico		= 18 446 603 336 221 196 288
+ * +----------------------+++0xffff800000000000	16Pico		= 18 446 603 336 221 196 288
  * | (impossible address) |
- * +----------------------+ 0x00007fffffffffff	140To		= 140 737 488 355 327 octets
- * | User                 |
- * | (text + data + heap) | ERREUR		0x20000000030	= 2 199 023 255 600 octets
- * +----------------------+ 0x2000000000	2To=2*2^40	= 2 199 023 255 552 octets
- * | User                 |
- * | (stack)              |
- * +----------------------+ 0x40000000		1Go=2^30	= 1 073 741 824 octets
- * | Kernel               |
- * | (valloc)             |
- * +----------------------+ 0x201000				 2 101 248 octets
- * | Kernel               |
- * | (APIC)               |
- * +----------------------+ 0x200000		2(Mo)=2*2^20	= 2 097 152 octets
- * | Kernel               |
+ * +----------------------+++0x00007fffffffffff	128To		=        140 737 488 355 327
+ * | User            .:.  | // Between 128 GiB and 128 TiB is the heap addresses for user procs
+ * | (text+data+heap) |   | // ERREUR		0x20000000030	=          2 199 023 255 600
+ * +----------------------+++0x2000000000	128Go		=            137 438 953 472
+ * | User      |          | // Between 1 GiB and 128 GiB is the stack
+ * | (stack)   v          | // addresses for user processes growing down from 128 GiB.
+ * +----------------------+++0x40000000		1Go=2^30	=              1 073 741 824
+ * | Kernel               | // Between 2 MiB and 1 GiB, there are kernel
+ * | (valloc)             | // addresses which are not mapped with an identity table.
+ * +----------------------+++0x201000				=                  2 101 248
+ * | Kernel               | // Between 2 MiB and 1 GiB, there are kernel
+ * | (APIC)               | // addresses which are not mapped with an identity table.
+ * +----------------------+++0x200000		2(Mo)=2*2^20	=                  2 097 152
+ * | Kernel               | // The first 2 MiB are identity mapped and not cached.
  * | (text + data)        |
- * +----------------------+ 0x100000		1(Mo)=2^20	= 1 048 576 octets
- * | Kernel               |
+ * +----------------------+++0x100000		1(Mo)=2^20	=                  1 048 576
+ * | Kernel               | // The first 2 MiB are identity mapped and not cached.
  * | (BIOS + VGA)         |
  * +----------------------+ 0x0
  *

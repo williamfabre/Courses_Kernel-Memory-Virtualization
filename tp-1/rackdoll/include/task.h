@@ -14,6 +14,18 @@ struct task
 	vaddr_t                   bss_end_vaddr;      /* vaddr following bss */
 	struct interrupt_context  context;       /* task registers save area */
 };
+/*Task memory layout
+ *                       adressage                     adressage
+ *                         virt                           Phy
+ *bss_end_vaddr-> +----------------------+     +----------------------+ <--- load_end_paddr
+ *                | BSS                  |     | code & data          |
+ *                |                      |     |                      |
+ *                +----------------------+     +----------------------+ <--- load_paddr
+ *                | code & data          |     | Higher half          |
+ *                |                      |     | (unused)             |
+ * load_vaddr ->  +----------------------+     +----------------------+
+ *
+ */
 
 
 /*

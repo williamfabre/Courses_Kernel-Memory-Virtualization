@@ -112,21 +112,112 @@ page.
 ```
 
 ### Question 2
-La première étape de la création d’une nouvelle tâche en mémoire est de dériver la table des pages courante en
-une nouvelle table des pages. Expliquez quelles plages d’adresses de la table courante doivent être conservées
-dans la nouvelle table et pourquoi.
+La première étape de la création d’une nouvelle tâche en mémoire est de dériver la table des pages courante en une nouvelle table des pages. Expliquez quelles plages d’adresses de la table courante doivent être conservées dans la nouvelle table et pourquoi.
 Une tâche utilisateur ctx est constituée de deux parties :
 — Le payload situé dans la mémoire physique entre ctx->load paddr et ctx->load end paddr qui
 contient le code et les données.
-— Le bss qui doit commencer en espace virtuel immédiatement après le payload et s’arrêter à l’adresse
-virtuelle ctx->bss end vaddr.
-On rappelle que le bss est une zone qui doit être initialisée à zero au lancement d’un tâche. Il est possible
-que certaines tâches aient un bss vide.
+— Le bss qui doit commencer en espace virtuel immédiatement après le payload et s’arrêter à l’adresse virtuelle ctx->bss end vaddr.  On rappelle que le bss est une zone qui doit être initialisée à zero au lancement d’un tâche. Il est possible que certaines tâches aient un bss vide.
+
+
+Il faut conserver les adresses entre 0x0 et 0x40000000 (1Go=2^30) qui contiennent
+le code du kernel. Qui doit rester accessible meme si on change de contexte.
+https://unix.stackexchange.com/questions/72680/how-does-linux-update-page-table-after-context-switch
+
+
 
 
 ### Question 3
-Donnez les adresses virtuelles de début et de fin du payload et du bss d’une tâche, calculées en fonction du
-modèle mémoire et des champs d’une tâche ctx.
+Donnez les adresses virtuelles de début et de fin du payload et du bss d’une tâche, calculées en fonction du modèle mémoire et des champs d’une tâche ctx.
+
+* Task-State Segment (TSS)—A segment that holds the processor state associated with a task.
+* TSS Descriptor—A segment descriptor that defines the task-state segment.
+* TSS Selector—A segment selector that references the TSS descriptor located in the GDT.
+* Task  Register—A register that holds the TSS selector and TSS descriptor for the current task.
+
+- VMA : virtual memory area
+
+``` c
+
+task.ld
+    TASK_VMA = 0x2000000000;
+    ...
+      .bss : ALIGN(0x1000) {
+    ...
+
+task/sieve.c
+    vaddr_t heap = (vaddr_t) &__bss_end;
+
+
+kernel/entry.S
+    .section ".bss"
+    .space  0x1000, 0     # initial stack of 4 KiB
+
+
+
+struct task
+{
+	//...
+	paddr_t load_paddr;    /* paddr of the task code =>0x00007fffffffffff */
+	paddr_t load_end_paddr;/* paddr following code  => 0x2000000000 */
+	vaddr_t load_vaddr;    /* vaddr for load_paddr */
+	vaddr_t bss_end_vaddr; /* vaddr following bss */
+	//...
+};
+
+/*                           Task memory layout FROM SMAIL
+ *
+ *                       adressage                     adressage
+ *                         virt                           Phy
+ *                +----------------------+
+ *                | HEAP                 |
+ *                |                      |
+ *bss_end_vaddr-> +----------------------+     +----------------------+ <--- load_end_paddr
+ *                | BSS                  |     | code & data          |
+ *                |                      |     |                      |
+ *                +----------------------+     +----------------------+ <--- load_paddr
+ *                | code & data          |     |                      |
+ *                |                      |     |                      |
+ * load_vaddr ->  +----------------------+     +----------------------+
+ */
+
+
+/*
+ * Memory model for Rackdoll OS
+ *
+ * +----------------------+++0xffffffffffffffff
+ * | Higher half          |
+ * | (unused)             |
+ * +----------------------+++0xffff800000000000	16Pico		= 18 446 603 336 221 196 288
+ * | (impossible address) |
+ * +----------------------+++0x00007fffffffffff	128To		=        140 737 488 355 327
+ * | User            .:.  | // Between 128 GiB and 128 TiB is the heap addresses for user procs
+ * | (text+data+bss+heap) | // ERREUR		0x20000000030	=          2 199 023 255 600
+ * +----------------------+++0x2000000000	128Go		=            137 438 953 472
+ * | User      |          | // Between 1 GiB and 128 GiB is the stack
+ * | (stack)   v          | // addresses for user processes growing down from 128 GiB.
+ * +----------------------+++0x40000000		1Go=2^30	=              1 073 741 824
+ * | Kernel               | // Between 2 MiB and 1 GiB, there are kernel
+ * | (valloc)             | // addresses which are not mapped with an identity table.
+ * +----------------------+++0x201000				=                  2 101 248
+ * | Kernel               | // Between 2 MiB and 1 GiB, there are kernel
+ * | (APIC)               | // addresses which are not mapped with an identity table.
+ * +----------------------+++0x200000		2(Mo)=2*2^20	=                  2 097 152
+ * | Kernel               | // The first 2 MiB are identity mapped and not cached.
+ * | (text + data)        |
+ * +----------------------+++0x100000		1(Mo)=2^20	=                  1 048 576
+ * | Kernel               | // The first 2 MiB are identity mapped and not cached.
+ * | (BIOS + VGA)         |
+ * +----------------------+ 0x0
+ */
+
+
+
+```
+
+
+
+BSS 4ko
+HEAP
 
 
 ### Question 4
