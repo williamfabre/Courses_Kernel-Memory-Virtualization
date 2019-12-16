@@ -21,8 +21,8 @@ struct task
  *                | BSS                  |     | code & data          |
  *                |                      |     |                      |
  *                +----------------------+     +----------------------+ <--- load_paddr
- *                | code & data          |     | Higher half          |
- *                |                      |     | (unused)             |
+ *                | code & data          |     |                      |
+ *                |                      |     |                      |
  * load_vaddr ->  +----------------------+     +----------------------+
  *
  */

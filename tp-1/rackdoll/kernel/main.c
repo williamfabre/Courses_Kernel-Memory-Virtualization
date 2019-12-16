@@ -42,22 +42,27 @@ void main_multiboot2(void *mb2)
 	sti();                                          /* enable interrupts */
 
 	// EXERCICE 2
-	cr3 = store_cr3();
-	/*cr3 = 0xFFFFFFFFFFFFFFFF;*/
-	print_pgt(cr3, 4);                                   //print page table
+	/*cr3 = store_cr3();*/
+	/*print_pgt(cr3, 4);                                   //print page table*/
 
 	paddr_t new;
 	fake.pgt = store_cr3();
 	new = alloc_page();
-	map_page(&fake, 0x201000, new);
+	/*map_page(&fake, 0x201000, new);*/
+	map_page(&fake, 0x401000, new);
 	vaddr_t value = 0x42;
-	paddr_t *cadre = 0x201000;
+	/*paddr_t *cadre = 0x201000;*/
+	paddr_t *cadre = 0x401000;
 	*cadre = value;
-	print_pgt(cr3, 4);                                   //print page table
 
+	/*cr3 = store_cr3();*/
+	/*print_pgt(cr3, 4);                                   //print page table*/
 
 	load_tasks(mb2);                         /* load the tasks in memory */
 	run_tasks();                                 /* run the loaded tasks */
+
+	cr3 = store_cr3();
+	print_pgt(cr3, 4);                                   //print page table
 
 	printk("\nGoodbye!\n");                                 /* fairewell */
 	die();                        /* the work is done, we can die now... */

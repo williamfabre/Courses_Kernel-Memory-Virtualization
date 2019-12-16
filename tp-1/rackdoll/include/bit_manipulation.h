@@ -44,4 +44,24 @@ void set_usr(paddr_t* addr)
 	set_1bit(addr, 2);
 }
 
+// les bons droits pour une big page du kernel
+void set_pml2(paddr_t* addr)
+{
+	set_1bit(addr, 0);
+	set_1bit(addr, 1);
+	set_1bit(addr, 3);
+	set_1bit(addr, 4);
+	set_1bit(addr, 7);
+	set_1bit(addr, 8);
+}
+
+// les bons droits pour une normal page de base
+void set_pml1(paddr_t* addr)
+{
+	set_1bit(addr, 0);
+	set_1bit(addr, 1);
+	set_1bit(addr, 3);
+	set_1bit(addr, 4);
+}
+
 #endif

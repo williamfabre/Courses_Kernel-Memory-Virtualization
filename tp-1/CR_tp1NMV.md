@@ -134,25 +134,28 @@ Donnez les adresses virtuelles de début et de fin du payload et du bss d’une 
 * TSS Selector—A segment selector that references the TSS descriptor located in the GDT.
 * Task  Register—A register that holds the TSS selector and TSS descriptor for the current task.
 
-- VMA : virtual memory area
+* VMA : virtual memory area
 
 ``` c
 
+//-----------------------------------------------------------------------------
 task.ld
     TASK_VMA = 0x2000000000;
     ...
       .bss : ALIGN(0x1000) {
     ...
 
+//-----------------------------------------------------------------------------
 task/sieve.c
     vaddr_t heap = (vaddr_t) &__bss_end;
 
 
+//-----------------------------------------------------------------------------
 kernel/entry.S
     .section ".bss"
     .space  0x1000, 0     # initial stack of 4 KiB
 
-
+//-----------------------------------------------------------------------------
 
 struct task
 {
@@ -164,6 +167,7 @@ struct task
 	//...
 };
 
+ *-----------------------------------------------------------------------------
 /*                           Task memory layout FROM SMAIL
  *
  *                       adressage                     adressage
@@ -178,10 +182,8 @@ struct task
  *                |      code & data     |     |                      |
  *                |        PAYLOAD       |     |                      |
  * load_vaddr ->  +----------------------+     +----------------------+
- */
-
-
-/*
+ *
+ *-----------------------------------------------------------------------------
  * Memory model for Rackdoll OS
  *
  * +----------------------+++0xffffffffffffffff
@@ -210,14 +212,15 @@ struct task
  * +----------------------+ 0x0
  */
 
-
-
 ```
 
+* size  = load_end_paddr - load_paddr
 
+* Début payload: load_vaddr
 
-BSS 4ko
-HEAP
+* Fin payload: load_vaddr + size
+
+* bss_start_vaddr = load_vaddr + size.
 
 
 ### Question 4
