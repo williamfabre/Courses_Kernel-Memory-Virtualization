@@ -172,11 +172,11 @@ struct task
  *                | HEAP                 |
  *                |                      |
  *bss_end_vaddr-> +----------------------+     +----------------------+ <--- load_end_paddr
- *                | BSS                  |     | code & data          |
- *                |                      |     |                      |
+ *                | BSS                  |     |     code & data      |
+ *                |                      |     |       PAYLOAD        |
  *                +----------------------+     +----------------------+ <--- load_paddr
- *                | code & data          |     |                      |
- *                |                      |     |                      |
+ *                |      code & data     |     |                      |
+ *                |        PAYLOAD       |     |                      |
  * load_vaddr ->  +----------------------+     +----------------------+
  */
 
