@@ -104,12 +104,13 @@ void free_page(paddr_t addr)
 // THANKS TO SOME CODE THAT I CORRECTED FROM GITHUB
 //mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
 // un espace d’une page pour la tâche ctx
+// donne les droits 0x7
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
 	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
 	int offset, i;
 
-	/*printk("\nMapping v_addr %p to p_addr %p...\n", vaddr ,paddr);*/
+	/*printk("Mapping v_addr %p to p_addr %p...\n", vaddr ,paddr);*/
 
 	for (i = 4; i > 0; --i)
 	{
@@ -128,7 +129,6 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		/*printk("%s next cadre lvl%d %p \n", __func__, i-1, cadre);*/
 	}
 
-
 	/*printk("\n%s Gestion lvl%d %p \n", __func__, i, cadre);*/
 	offset = INDEX(vaddr, i);
 	cadre = cadre + offset;
@@ -141,20 +141,44 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 
 
 // load_task: conseils de SMAIL
-/*	map code & data */
-/*	map bss */
+// IN THAT ORDER
 /*	alloc new page table */
 /*	link PMLs */
 /*	ref. kernel code & data */
+/*	map code & data */
+/*	map bss */
 void load_task(struct task *ctx)
 {
 	uint64_t size;
 	vaddr_t bss_start_vaddr;
 	paddr_t *address;
+
 	paddr_t pml4;
 	paddr_t pml3;
 	paddr_t pml2;
 	paddr_t pml1;
+
+	// table alloc
+	pml4 = alloc_page();
+	pml3 = alloc_page();
+	pml2 = alloc_page();
+	pml1 = alloc_page();
+
+	// mise a 0 des pages car elles sont indefinies
+	for (int i=0; i < 1<<9; i++){
+		((paddr_t*) pml4)[i] &= 0x0000000000000000;
+		((paddr_t*) pml3)[i] &= 0x0000000000000000;
+		((paddr_t*) pml2)[i] &= 0x0000000000000000;
+		((paddr_t*) pml1)[i] &= 0x0000000000000000;
+	}
+
+	// table link and kernel ID mapping
+	((paddr_t*)pml4)[0] = pml3 | 0x7;  // pml4[0] = pml3 | U | W | P
+	((paddr_t*)pml3)[0] = pml2 | 0x7;  // pml3[0] = pml2 | U | W | P
+	((paddr_t*)pml2)[0] = 0x0  | 0x19b;// pml2[0] = G | PS | PCD | PWT | W | P
+	((paddr_t*)pml2)[1] = pml1 | 0x1b; // pml2[1] = apic | G | PCD | PWT | W | P
+
+	ctx->pgt = (paddr_t)pml4;
 
 	// taille du "segment" code+data+text+heap
 	size = ctx->load_end_paddr - ctx->load_paddr;
@@ -162,49 +186,36 @@ void load_task(struct task *ctx)
 	// adresse virtuelle de depart du bss
 	bss_start_vaddr = ctx->load_vaddr + size;
 
-	// map le debut du load
-	map_page(ctx , ctx->load_paddr, ctx->load_vaddr);
+	// map le debut du load map_page(*ctx, vaddr, paddr)
+	map_page(ctx, ctx->load_vaddr, ctx->load_paddr);
 
-	// map une nouvelle page physique sur le debut du bss
-	// puis mise a 0 du bss
+	// map une nouvelle page physique sur le debut du bss puis mise a 0 du bss
 	*address = alloc_page();
-	*address = *address | 0x7;
-	memset(address, 0, 4000);
-	map_page(ctx, *address, bss_start_vaddr);
-
-
-	// table and kernel ID mapping
-	pml4 = alloc_page();
-	pml3 = alloc_page();
-	pml2 = alloc_page();
-	pml1 = alloc_page();
-
-	((paddr_t*)pml4)[0] = pml3 | 0x7; // pml4[0] = pml3 | U | W | P
-	((paddr_t*)pml3)[0] = pml2 | 0x7; // pml3[0] = pml2 | U | W | P
-	((paddr_t*)pml2)[0] = 0x0  | 0x19b; // pml2[0] = G | PS | PCD | PWT | W | P
-	((paddr_t*)pml2)[1] = pml1 | 0x1b; // pml2[1] = apic | G | PCD | PWT | W | P
-
-	ctx->pgt = (paddr_t)pml4;
-	printk("%s testme\n",__func__);
+	memset(address, 0, size);
+	map_page(ctx, bss_start_vaddr, *address);
 }
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
 void set_task(struct task *ctx)
-{
-	/*printk("old  cr3 = %p\n", store_cr3());*/
-	/*print_pgt(store_cr3(), 4);                                   //print page table*/
-	/*printk("\n\n");*/
+
+	/*uint64_t cr3;*/
+	/*printk("%s PRE LOAD\n", __func__);*/
+	/*cr3 = ctx->pgt;*/
+	/*cr3 = store_cr3();*/
+	/*print_pgt(cr3, 4);                                   //print page table*/
 	load_cr3(ctx->pgt);
-	/*printk("new  cr3 = %p\n", store_cr3());*/
-	/*print_pgt(store_cr3(), 4);                                   //print page table*/
+	/*printk("%s POST LOAD\n", __func__);*/
+	/*cr3 = store_cr3();*/
+	 /*print_pgt(cr3, 4);                                   //print page table*/
 }
 
-// alloue une page physique,
-// l’initialise à zero et
+// alloue une page physique, l’initialise à zero et
 // la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 void mmap(struct task *ctx, vaddr_t vaddr)
 {
+	printk("%s BEGIN\n", __func__);
 	paddr_t *cadre;
+	/*uint64_t cr3;*/
 
 	// alloue
 	*cadre = alloc_page();
@@ -213,10 +224,12 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	memset(cadre, 0, 4000);
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
-	map_page(ctx, *cadre, vaddr);
-	print_pgt(store_cr3(), 4);                                   //print page table
+	map_page(ctx, vaddr, *cadre);
 
-	/*printk("= %p\n", store_cr3());*/
+	/*cr3 = ctx->pgt;*/
+	/*print_pgt(cr3, 4);                                   //print page table*/
+
+	/*printk("%s testme\n", __func__);*/
 }
 
 void munmap(struct task *ctx, vaddr_t vaddr)
