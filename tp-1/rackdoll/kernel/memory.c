@@ -175,32 +175,32 @@ void load_task(struct task *ctx)
 	size = ctx->load_end_paddr - ctx->load_paddr;
 	// normalement pour etre propre il faut mapper size fois mais ici c'est
 	// cool par ce que la size elle vaut exactement 4096
-	/*printk("%s %d number of page to alloc \n", __func__, (size / 0x1000));*/
+	/*printk("%s %d number of page to alloc \n", __func__, (size /
+	 * 0x1000));*/
 
 	// adresse virtuelle de depart du bss
 	bss_start_vaddr = ctx->load_vaddr + size;
 
-	// map le debut du load map_page(*ctx, vaddr, paddr)
-	// potentiellement pareil il faudrait mapper size fois 
+	// map le debut du load map_page(*ctx, vaddr, paddr) potentiellement
+	// pareil il faudrait mapper size fois
 	map_page(ctx, ctx->load_vaddr, ctx->load_paddr);
 
-	// map une nouvelle page physique sur le debut du bss puis mise a 0 du bss
+	// map une nouvelle page physique sur le debut du bss puis mise a 0 du
+	// bss
 	*address = alloc_page();
 	memset(*address, 0, size);
 	map_page(ctx, bss_start_vaddr, *address | 0x7);
-
 	print_pgt(pml4, 4);
 }
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
 void set_task(struct task *ctx)
 {
-
 	load_cr3(ctx->pgt);
 }
 
-// alloue une page physique, l’initialise à zero et
-// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
+// alloue une page physique, l’initialise à zero et la mappe à l’adresse
+// virtuelle donnée pour la tâche donnée.
 void mmap(struct task *ctx, vaddr_t vaddr)
 {
 	paddr_t *cadre;
@@ -222,12 +222,16 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 
 void pgfault(struct interrupt_context *ctx)
 {
-	/*Contains a value called Page Fault Linear Address (PFLA).
-	 * When a page fault occurs, the address the program attempted
-	 * to access is stored in the CR2 register. */
+	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
+	 * fault occurs, the address the program attempted to access is stored
+	 * in the CR2 register. */
 	printk("Page fault at %p\n", ctx->rip);
-	printk("  cr2 = %p\n", store_cr2());
-	asm volatile ("hlt");
+
+	/*les seules fautes de page légitimes sont celles de la pile*/
+
+
+	/*printk("  cr2 = %p\n", store_cr2()); asm volatile ("hlt");*/
+	exit_task(ctx);
 }
 
 void duplicate_task(struct task *ctx)
