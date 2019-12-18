@@ -109,13 +109,12 @@ void free_page(paddr_t addr)
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
 	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
-	int offset, i;
-
+	int index, i;
 	// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
 	for (i = 4; i > 1; --i)
 	{
-		offset = INDEX(vaddr, i);
-		cadre = cadre + offset;
+		index = INDEX(vaddr, i);
+		cadre = cadre + index;
 		if (!(*cadre & 0x1))// if empty or invalid
 		{
 			*cadre = alloc_page() | 0x7;
@@ -123,9 +122,8 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 	}
-
-	offset = INDEX(vaddr, i);
-	cadre = cadre + offset;
+	index = INDEX(vaddr, i);
+	cadre = cadre + index;
 	*cadre = paddr | 0x7;
 }
 
@@ -208,6 +206,7 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 {
 	paddr_t *cadre;
 
+	printk("%s\n", __func__);
 	// alloue
 	*cadre = alloc_page();
 
@@ -216,17 +215,40 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
-
 }
+
 // permet de supprimer le mapping d’une adresse virtuelle donnée pour une tâche
 // donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
+	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
+	int index, i;
 
+	// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
+	for (i = 4; i > 1; --i)
+	{
+		index = INDEX(vaddr, i);
+		cadre = cadre + index;
+		if ((*cadre) & 0x1) // l'entree est valide
+		{
+			*cadre &= ~0x1;
+			/*printk("%s \n", __func__);*/
+		}
+		cadre = (uint64_t*) (*cadre & ADDR_MASK);
+	}
+
+	index = INDEX(vaddr, i);
+	cadre = cadre + index;
+
+	if (!((*cadre) & 0x1)) // l'entree est invalide
+	{
+		free_page(cadre);
+	}
 }
 
 void pgfault(struct interrupt_context *ctx)
 {
+	uint64_t cr2 = store_cr2();
 	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
 	 * fault occurs, the address the program attempted to access is stored
 	 * in the CR2 register. */
@@ -237,16 +259,17 @@ void pgfault(struct interrupt_context *ctx)
 	 * | (stack)   v          |
 	 * +----------------------+++0x40000000
 	 */
-	/*if (ctx->rip < 0x2000000000 && ctx->rip > 0x40000000)*/
-	if (store_cr2() < 0x2000000000 && store_cr2() > 0x40000000)
+
+	if (cr2 < 0x2000000000 && cr2 > 0x40000000)
 	{
 		// allocation de la pile
-		/*printk("PAGEFAULT  cr2 = %p\n", store_cr2());*/
-		map_page(ctx, store_cr2(), alloc_page() | 0x7);
+		printk("%s cr2 = %p\n", __func__, cr2);
+		/*exit_task(ctx);*/
+		map_page(ctx, cr2, alloc_page() | 0x7);
 	} else {
 		/*Toute faute à une adresse en dehors de la pile doit causer*/
 		/*une faute de segmentation de la tâche courante*/
-		printk("SEGFAULT cr2 = %p\n", store_cr2());
+		printk("%s SEGFAULT cr2 = %p\n", __func__, store_cr2());
 		exit_task(ctx);
 	}
 }
