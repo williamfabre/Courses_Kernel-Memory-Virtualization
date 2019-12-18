@@ -299,7 +299,7 @@ sera utilisée"
 ### Question 4
 Implémentez la fonction void pgfault(struct interrupt context *ctx) qui traite
 une faute de page dont le contexte est stocké dans ctx et où l’adresse qui a
-causé la faute est stockée dans le re- gistre CR2 accessible via la fonction
+causé la faute est stockée dans le registre CR2 accessible via la fonction
 uint64 t store cr2(void). Rappellez-vous que les seules fautes de page
 légitimes sont celles de la pile. Toute faute à une adresse en dehors de la
 pile doit causer une faute de segmentation de la tâche courante (vous pouvez

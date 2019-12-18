@@ -119,7 +119,7 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		if (!(*cadre & 0x1))// if empty or invalid
 		{
 			*cadre = alloc_page() | 0x7;
-			memset(*cadre, 0, PAGE_SIZE);
+			memset((void*)*cadre, 0, PAGE_SIZE);
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 	}
@@ -188,9 +188,8 @@ void load_task(struct task *ctx)
 	// map une nouvelle page physique sur le debut du bss puis mise a 0 du
 	// bss
 	*address = alloc_page();
-	memset(*address, 0, size);
+	memset((void*)*address, 0, size);
 	map_page(ctx, bss_start_vaddr, *address | 0x7);
-	print_pgt(pml4, 4);
 }
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
@@ -209,7 +208,7 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	*cadre = alloc_page();
 
 	// init a 0
-	memset(cadre, 0, 4096);
+	memset((void*)*cadre, 0, 4096);
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
@@ -225,13 +224,25 @@ void pgfault(struct interrupt_context *ctx)
 	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
 	 * fault occurs, the address the program attempted to access is stored
 	 * in the CR2 register. */
-	printk("Page fault at %p\n", ctx->rip);
 
 	/*les seules fautes de page légitimes sont celles de la pile*/
-
-
-	/*printk("  cr2 = %p\n", store_cr2()); asm volatile ("hlt");*/
-	exit_task(ctx);
+	/* +----------------------+++0x2000000000
+	 * | User      |          |
+	 * | (stack)   v          |
+	 * +----------------------+++0x40000000
+	 */
+	/*if (ctx->rip < 0x2000000000 && ctx->rip > 0x40000000)*/
+	if (store_cr2() < 0x2000000000 && store_cr2() > 0x40000000)
+	{
+		// allocation de la pile
+		/*printk("PAGEFAULT  cr2 = %p\n", store_cr2());*/
+		map_page(ctx, store_cr2(), alloc_page() | 0x7);
+	} else {
+		/*Toute faute à une adresse en dehors de la pile doit causer*/
+		/*une faute de segmentation de la tâche courante*/
+		printk("SEGFAULT cr2 = %p\n", store_cr2());
+		exit_task(ctx);
+	}
 }
 
 void duplicate_task(struct task *ctx)

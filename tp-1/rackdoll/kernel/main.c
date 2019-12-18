@@ -28,8 +28,8 @@ void die(void)
 __attribute__((noreturn))
 void main_multiboot2(void *mb2)
 {
-	uint64_t cr3;
-	struct task fake;
+	/*uint64_t cr3;*/
+	/*struct task fake;*/
 
 	clear();                                     /* clear the VGA screen */
 	printk("Rackdoll OS\n-----------\n\n");                 /* greetings */
