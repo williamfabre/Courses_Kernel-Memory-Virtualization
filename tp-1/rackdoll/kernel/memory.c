@@ -170,10 +170,12 @@ void load_task(struct task *ctx)
 	((paddr_t*)pml2)[0] = 0x0  | 0x19b;// pml2[0] = G | PS | PCD | PWT | W | P
 	((paddr_t*)pml2)[1] = pml1 | 0x1b; // pml2[1] = apic | G | PCD | PWT | W | P
 
+	// mise a jour du pgt
 	ctx->pgt = (paddr_t)pml4;
 
 	// taille du "segment" code+data+text+heap
 	size = ctx->load_end_paddr - ctx->load_paddr;
+	/*printk("%s %d number of page to alloc \n", __func__, (size / 0x1000));*/
 
 	// adresse virtuelle de depart du bss
 	bss_start_vaddr = ctx->load_vaddr + size;
