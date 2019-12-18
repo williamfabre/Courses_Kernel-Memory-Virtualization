@@ -305,3 +305,29 @@ légitimes sont celles de la pile. Toute faute à une adresse en dehors de la
 pile doit causer une faute de segmentation de la tâche courante (vous pouvez
 utiliser la fonction void exit task(struct interrupt context *ctx) qui termine
 la tâche courante).
+OK
+
+### Exercice 5
+Dans cet exercice on implémente la fonction de libération. Á cette étape du TP,
+les tâches doivent s’exécuter brièvement avant d’échouer. Des messages
+d’avertissement indiquant une pénurie mémoire doivent aussi s’afficher sur le
+moniteur. Cette pénurie est causée par la tâche “Sieve” qui fait de nombreux
+appels système mmap et munmap. Puisque munmap n’est pas encore implémenté,
+aucune page n’est libérée : c’est une fuite mémoire.
+
+### Question 1
+Implémentez la fonction void munmap(struct task *ctx, vaddr t vaddr) qui permet
+de supprimer le mapping d’une adresse virtuelle donnée pour une tâche donnée.
+Cette fonction doit aussi libérer les pages mémoire qui ne sont plus utilisées
+à l’aide de la fonction void free page(paddr t addr).  Une fois la fonction
+munmap implémentée, la tâche Sieve ne devrait plus causer de pénurie mémoire et
+toutes les tâches devraient pouvoir s’exécuter complètement.
+
+### Question 2
+Il est possible que malgré une exécution complète, la tâche “Adversary” indique
+un echec. En lisant le code de cette tâche dans task/adversary.c et en relisant
+le code de votre fonction munmap, indiquez ce qui peut provoquer cet echec.
+
+### Question 3
+Corrigez le problème soulevé dans la ### Question 2 à l’aide d’une fonction définie
+dans le fichier include/x86.h.

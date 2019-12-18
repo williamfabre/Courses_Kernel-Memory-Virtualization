@@ -218,9 +218,11 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	map_page(ctx, vaddr, *cadre);
 
 }
-
+// permet de supprimer le mapping d’une adresse virtuelle donnée pour une tâche
+// donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
+
 }
 
 void pgfault(struct interrupt_context *ctx)
