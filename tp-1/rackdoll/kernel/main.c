@@ -29,7 +29,7 @@ __attribute__((noreturn))
 void main_multiboot2(void *mb2)
 {
 	uint64_t cr3;
-	/*struct task fake;*/
+	struct task fake;
 
 	clear();                                     /* clear the VGA screen */
 	printk("Rackdoll OS\n-----------\n\n");                 /* greetings */
@@ -42,13 +42,16 @@ void main_multiboot2(void *mb2)
 	sti();                                          /* enable interrupts */
 
 	// EXERCICE 2
-	/*cr3 = store_cr3();*/
-	/*print_pgt(cr3, 4);                                   //print page table*/
+/*
+	cr3 = store_cr3();
+	print_pgt(cr3, 4);                                   //print page table
 
-	/*paddr_t new;*/
-	/*fake.pgt = store_cr3();*/
-	/*new = alloc_page();*/
-	/*map_page(&fake, 0x201000, new);*/
+	paddr_t new;
+	fake.pgt = store_cr3();
+	new = alloc_page();
+	map_page(&fake, 0x201000, new);
+*/
+
 	/*map_page(&fake, 0x401000, new);*/
 	/*vaddr_t value = 0x42;*/
 	/*paddr_t *cadre = 0x201000;*/
@@ -58,6 +61,7 @@ void main_multiboot2(void *mb2)
 	printk("\n avant load\n");
 	/*cr3 = store_cr3();*/
 	/*print_pgt(cr3, 4);                                   //print page table*/
+	
 
 	load_tasks(mb2);                         /* load the tasks in memory */
 	printk("\nentre load et run\n");

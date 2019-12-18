@@ -7,6 +7,7 @@
 #define PHYSICAL_POOL_PAGES  64
 #define PHYSICAL_POOL_BYTES  (PHYSICAL_POOL_PAGES << 12)
 #define BITSET_SIZE          (PHYSICAL_POOL_PAGES >> 6)
+#define PAGE_SIZE            4096
 
 extern __attribute__((noreturn)) void die(void);
 
@@ -110,33 +111,22 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
 	int offset, i;
 
-	/*printk("Mapping v_addr %p to p_addr %p...\n", vaddr ,paddr);*/
-
-	for (i = 4; i > 0; --i)
+	// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
+	for (i = 4; i > 1; --i)
 	{
 		offset = INDEX(vaddr, i);
-		/*printk("%s offset lvl%d %p \n", __func__, i, offset);*/
-		/*printk("%s cadre without offset lvl%d %p \n", __func__, i, cadre);*/
 		cadre = cadre + offset;
-		/*printk("%s cadre with offset lvl%d %p \n", __func__, i, cadre);*/
-		if (!cadre || !check_1bit(*cadre, 1))// if empty or invalid
+		if (!(*cadre & 0x1))// if empty or invalid
 		{
-			/*printk("alloc needed\n");*/
-			*cadre = alloc_page();
-			set_usr(cadre); // set right to value pointed by cadre
+			*cadre = alloc_page() | 0x7;
+			memset(*cadre, 0, PAGE_SIZE);
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
-		/*printk("%s next cadre lvl%d %p \n", __func__, i-1, cadre);*/
 	}
 
-	/*printk("\n%s Gestion lvl%d %p \n", __func__, i, cadre);*/
 	offset = INDEX(vaddr, i);
 	cadre = cadre + offset;
-	set_usr(&paddr);
-	*cadre = paddr;
-	/*printk("%s pointee %p \n", __func__, cadre);*/
-	/*printk("%s alloc done (pointed) %p \n", __func__, *cadre);*/
-	/*printk("\n\n");*/
+	*cadre = paddr | 0x7;
 }
 
 
@@ -158,72 +148,72 @@ void load_task(struct task *ctx)
 	paddr_t pml2;
 	paddr_t pml1;
 
+	paddr_t cr3;
+
 	// table alloc
 	pml4 = alloc_page();
 	pml3 = alloc_page();
 	pml2 = alloc_page();
 	pml1 = alloc_page();
 
+
 	// table link and kernel ID mapping
 	((paddr_t*)pml4)[0] = pml3 | 0x7;  // pml4[0] = pml3 | U | W | P
 	((paddr_t*)pml3)[0] = pml2 | 0x7;  // pml3[0] = pml2 | U | W | P
+
+	// mapping kernel
 	((paddr_t*)pml2)[0] = 0x0  | 0x19b;// pml2[0] = G | PS | PCD | PWT | W | P
+
+	// mapping APIC
 	((paddr_t*)pml2)[1] = pml1 | 0x1b; // pml2[1] = apic | G | PCD | PWT | W | P
+	((paddr_t*)pml1)[0] = 0xfee00000 | 0x11b; // pml2[1] = apic | G | PCD | PWT | W | P
 
 	// mise a jour du pgt
-	ctx->pgt = (paddr_t)pml4;
+	ctx->pgt = pml4;
 
 	// taille du "segment" code+data+text+heap
 	size = ctx->load_end_paddr - ctx->load_paddr;
+	// normalement pour etre propre il faut mapper size fois mais ici c'est
+	// cool par ce que la size elle vaut exactement 4096
 	/*printk("%s %d number of page to alloc \n", __func__, (size / 0x1000));*/
 
 	// adresse virtuelle de depart du bss
 	bss_start_vaddr = ctx->load_vaddr + size;
 
 	// map le debut du load map_page(*ctx, vaddr, paddr)
+	// potentiellement pareil il faudrait mapper size fois 
 	map_page(ctx, ctx->load_vaddr, ctx->load_paddr);
 
 	// map une nouvelle page physique sur le debut du bss puis mise a 0 du bss
 	*address = alloc_page();
-	memset(address, 0, size);
-	map_page(ctx, bss_start_vaddr, *address);
+	memset(*address, 0, size);
+	map_page(ctx, bss_start_vaddr, *address | 0x7);
+
+	print_pgt(pml4, 4);
 }
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
 void set_task(struct task *ctx)
 {
-	uint64_t cr3;
-	printk("%s PRE LOAD\n", __func__);
-	cr3 = ctx->pgt;
-	cr3 = store_cr3();
-	print_pgt(cr3, 4);                                   //print page table
+
 	load_cr3(ctx->pgt);
-	printk("%s POST LOAD\n", __func__);
-	cr3 = store_cr3();
-	 print_pgt(cr3, 4);                                   //print page table
 }
 
 // alloue une page physique, l’initialise à zero et
 // la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 void mmap(struct task *ctx, vaddr_t vaddr)
 {
-	printk("%s BEGIN\n", __func__);
 	paddr_t *cadre;
-	/*uint64_t cr3;*/
 
 	// alloue
 	*cadre = alloc_page();
 
 	// init a 0
-	memset(cadre, 0, 4000);
+	memset(cadre, 0, 4096);
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
 
-	/*cr3 = ctx->pgt;*/
-	/*print_pgt(cr3, 4);                                   //print page table*/
-
-	/*printk("%s testme\n", __func__);*/
 }
 
 void munmap(struct task *ctx, vaddr_t vaddr)

@@ -216,6 +216,8 @@ adversary.elf:     file format elf64-x86-64
 
 
 
+// Dans le OBJdump 
+
 Contents of section .header:
  2000000000 ffdec04b a6ad10ff 00000000 20000000  ...K........ ...
  2000000010 00100000 20000000 00300000 20000000  .... ....0.. ...
