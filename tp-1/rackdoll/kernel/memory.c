@@ -164,14 +164,6 @@ void load_task(struct task *ctx)
 	pml2 = alloc_page();
 	pml1 = alloc_page();
 
-	// mise a 0 des pages car elles sont indefinies
-	for (int i=0; i < 1<<9; i++){
-		((paddr_t*) pml4)[i] &= 0x0000000000000000;
-		((paddr_t*) pml3)[i] &= 0x0000000000000000;
-		((paddr_t*) pml2)[i] &= 0x0000000000000000;
-		((paddr_t*) pml1)[i] &= 0x0000000000000000;
-	}
-
 	// table link and kernel ID mapping
 	((paddr_t*)pml4)[0] = pml3 | 0x7;  // pml4[0] = pml3 | U | W | P
 	((paddr_t*)pml3)[0] = pml2 | 0x7;  // pml3[0] = pml2 | U | W | P
@@ -197,16 +189,16 @@ void load_task(struct task *ctx)
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
 void set_task(struct task *ctx)
-
-	/*uint64_t cr3;*/
-	/*printk("%s PRE LOAD\n", __func__);*/
-	/*cr3 = ctx->pgt;*/
-	/*cr3 = store_cr3();*/
-	/*print_pgt(cr3, 4);                                   //print page table*/
+{
+	uint64_t cr3;
+	printk("%s PRE LOAD\n", __func__);
+	cr3 = ctx->pgt;
+	cr3 = store_cr3();
+	print_pgt(cr3, 4);                                   //print page table
 	load_cr3(ctx->pgt);
-	/*printk("%s POST LOAD\n", __func__);*/
-	/*cr3 = store_cr3();*/
-	 /*print_pgt(cr3, 4);                                   //print page table*/
+	printk("%s POST LOAD\n", __func__);
+	cr3 = store_cr3();
+	 print_pgt(cr3, 4);                                   //print page table
 }
 
 // alloue une page physique, l’initialise à zero et
@@ -238,6 +230,9 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 
 void pgfault(struct interrupt_context *ctx)
 {
+	/*Contains a value called Page Fault Linear Address (PFLA).
+	 * When a page fault occurs, the address the program attempted
+	 * to access is stored in the CR2 register. */
 	printk("Page fault at %p\n", ctx->rip);
 	printk("  cr2 = %p\n", store_cr2());
 	asm volatile ("hlt");

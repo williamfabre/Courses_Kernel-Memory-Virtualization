@@ -63,9 +63,9 @@ void main_multiboot2(void *mb2)
 	printk("\nentre load et run\n");
 	run_tasks();                                 /* run the loaded tasks */
 
-	printk("\n apres run\n");
-	cr3 = store_cr3();
-	print_pgt(cr3, 4);                                   //print page table
+	/*printk("\n apres run\n");*/
+	/*cr3 = store_cr3();*/
+	/*print_pgt(cr3, 4);                                   //print page table*/
 
 	printk("\nGoodbye!\n");                                 /* fairewell */
 	die();                        /* the work is done, we can die now... */
