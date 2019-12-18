@@ -139,7 +139,8 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 /*	map bss */
 void load_task(struct task *ctx)
 {
-	uint64_t size;
+	uint64_t payload_size;
+	uint64_t bss_size;
 	vaddr_t bss_start_vaddr;
 	paddr_t *address;
 
@@ -166,30 +167,33 @@ void load_task(struct task *ctx)
 
 	// mapping APIC
 	((paddr_t*)pml2)[1] = pml1 | 0x1b; // pml2[1] = apic | G | PCD | PWT | W | P
-	((paddr_t*)pml1)[0] = 0xfee00000 | 0x11b; // pml2[1] = apic | G | PCD | PWT | W | P
+	((paddr_t*)pml1)[0] = 0xfee00000 | 0x11b; // gestion de APIC?
 
 	// mise a jour du pgt
 	ctx->pgt = pml4;
 
 	// taille du "segment" code+data+text+heap
-	size = ctx->load_end_paddr - ctx->load_paddr;
-	// normalement pour etre propre il faut mapper size fois mais ici c'est
-	// cool par ce que la size elle vaut exactement 4096
-	/*printk("%s %d number of page to alloc \n", __func__, (size /
-	 * 0x1000));*/
+	payload_size = ctx->load_end_paddr - ctx->load_paddr;
+	bss_start_vaddr = ctx->load_vaddr + payload_size;
+	bss_size =  ctx->bss_end_vaddr - bss_start_vaddr;
 
 	// adresse virtuelle de depart du bss
-	bss_start_vaddr = ctx->load_vaddr + size;
 
 	// map le debut du load map_page(*ctx, vaddr, paddr) potentiellement
-	// pareil il faudrait mapper size fois
-	map_page(ctx, ctx->load_vaddr, ctx->load_paddr);
+	// pareil il faudrait mapper size fois divise par la taille d'une page
+	for (int i = 0; i < payload_size; i+=PAGE_SIZE)
+	{
+		map_page(ctx, ctx->load_vaddr+i, ctx->load_paddr+i);
+	}
 
 	// map une nouvelle page physique sur le debut du bss puis mise a 0 du
-	// bss
-	*address = alloc_page();
-	memset((void*)*address, 0, size);
-	map_page(ctx, bss_start_vaddr, *address | 0x7);
+	// bss de la taille du bss.
+	for (int i = 0; i < bss_size; i+=PAGE_SIZE)
+	{
+		*address = alloc_page();
+		memset((void*)*address, 0, PAGE_SIZE);
+		map_page(ctx, bss_start_vaddr+i, *address | 0x7);
+	}
 }
 
 // qui charge une nouvelle tâche en mémoire en modifiant le CR3
