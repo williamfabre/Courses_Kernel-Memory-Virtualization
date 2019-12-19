@@ -189,8 +189,7 @@ struct task
 	vaddr_t bss_end_vaddr; /* vaddr following bss */
 	//...
 };
-
- *-----------------------------------------------------------------------------
+*-----------------------------------------------------------------------------
 /*                           Task memory layout FROM SMAIL
  *
  *                       adressage                     adressage
@@ -209,6 +208,7 @@ struct task
  *-----------------------------------------------------------------------------
  * Memory model for Rackdoll OS
  *
+
  * +----------------------+++0xffffffffffffffff
  * | Higher half          |
  * | (unused)             |

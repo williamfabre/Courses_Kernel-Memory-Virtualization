@@ -7,7 +7,7 @@
 #define PHYSICAL_POOL_PAGES  64
 #define PHYSICAL_POOL_BYTES  (PHYSICAL_POOL_PAGES << 12)
 #define BITSET_SIZE          (PHYSICAL_POOL_PAGES >> 6)
-#define PAGE_SIZE            4096
+#define PAGE_SIZE            0x1000
 
 
 #define offsetof(type, field)   ((size_t) &(((type *) 0)->field))
@@ -126,7 +126,7 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		if (!(*cadre & 0x1))// if empty or invalid
 		{
 			*cadre = (paddr_t)alloc_page() | 0x7;
-			memset((void*)*cadre, 0, PAGE_SIZE);
+			memset((paddr_t*)*cadre, 0, PAGE_SIZE);
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 	}
@@ -148,7 +148,7 @@ void load_task(struct task *ctx)
 	uint64_t payload_size;
 	uint64_t bss_size;
 	vaddr_t bss_start_vaddr;
-	paddr_t *address;
+	paddr_t *cadre;
 
 	paddr_t pml4;
 	paddr_t pml3;
@@ -185,18 +185,21 @@ void load_task(struct task *ctx)
 
 	// map le debut du load map_page(*ctx, vaddr, paddr) potentiellement
 	// pareil il faudrait mapper size fois divise par la taille d'une page
-	for (uint64_t i = 0; i < payload_size; i+=PAGE_SIZE)
+	for (vaddr_t i = 0; i < payload_size; i+=PAGE_SIZE)
 	{
 		map_page(ctx, ctx->load_vaddr+i, ctx->load_paddr+i);
 	}
 
 	// map une nouvelle page physique sur le debut du bss puis mise a 0 du
-	// bss de la taille du bss.
-	for (uint64_t i = 0; i < bss_size; i+=PAGE_SIZE)
+	// bss de la taille du bss la taille du bss peut varier d'un programme a
+	// l'autre
+	for (vaddr_t i = 0x0; i < bss_size; i+=PAGE_SIZE)
 	{
-		*address = (paddr_t)alloc_page();
-		memset((void*)*address, 0, PAGE_SIZE);
-		map_page(ctx, bss_start_vaddr+i, *address | 0x7);
+		*cadre = (paddr_t)alloc_page();
+		/*memset(((vaddr_t*)bss_start_vaddr+i), 0, PAGE_SIZE);*/
+		map_page(ctx, bss_start_vaddr+i, *cadre+i);
+		/*map_page(ctx, bss_start_vaddr, *cadre);*/
+		/*memset(((vaddr_t*)bss_start_vaddr), 0, PAGE_SIZE);*/
 	}
 }
 
@@ -212,12 +215,11 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 {
 	paddr_t *cadre;
 
-	/*printk("%s\n", __func__);*/
 	// alloue
-	*cadre = (paddr_t)alloc_page();
+	*cadre = alloc_page();
 
 	// init a 0
-	memset(cadre, 0, PAGE_SIZE);
+	memset((paddr_t*)*cadre, 0, PAGE_SIZE);
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
@@ -237,6 +239,7 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		cadre = cadre + index;
 		if (!((*cadre) & 0x1)) // l'entree est invalide
 		{
+			/*printk("%s Verification de fonctionnement\n", __func__);*/
 			free_page(*cadre);
 			return;
 		}
@@ -255,11 +258,11 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 void pgfault(struct interrupt_context *ctx)
 {
 	/*struct task *my_task;*/
-	uint64_t cr2 = store_cr2();
 	struct task *my_task = (struct task *) ctx->rdi;
 	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
 	 * fault occurs, the address the program attempted to access is stored
 	 * in the CR2 register. */
+	uint64_t cr2 = store_cr2();
 
 	/*les seules fautes de page légitimes sont celles de la pile*/
 	/* +----------------------+++0x2000000000
@@ -267,20 +270,16 @@ void pgfault(struct interrupt_context *ctx)
 	 * | (stack)   v          |
 	 * +----------------------+++0x40000000
 	 */
-	if (cr2 < 0x2000000000 && cr2 > 0x40000000)
-	{
-		/*my_task = container_of(ctx, struct task, context);*/
-		printk("%s my_task = %p\n", __func__, my_task->pgt);
 
-		// allocation de la pile
-		/*printk("%s cr2 = %p\n", __func__, cr2);*/
-		/*map_page(task, cr2, alloc_page());*/
-		/*map_page(my_task, cr2, alloc_page());*/
-		/*exit_task(ctx);*/
+	// allocation de la pile
+	if (cr2 > 0x40000000 && cr2 < 0x2000000000 ) {
+		/*printk("%s Page fault cr2 = %p\n", __func__, store_cr2());*/
+		mmap(my_task, cr2);
+		/*munmap(my_task, cr2);*/
 	} else {
 		/*Toute faute à une adresse en dehors de la pile doit causer*/
 		/*une faute de segmentation de la tâche courante*/
-		printk("%s SEGFAULT cr2 = %p\n", __func__, store_cr2());
+		printk("%s Segfault cr2 = %p\n", __func__, store_cr2());
 		exit_task(ctx);
 	}
 }
