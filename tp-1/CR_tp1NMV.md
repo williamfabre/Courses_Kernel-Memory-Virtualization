@@ -322,11 +322,13 @@ Cette fonction doit aussi libérer les pages mémoire qui ne sont plus utilisée
 à l’aide de la fonction void free page(paddr t addr).  Une fois la fonction
 munmap implémentée, la tâche Sieve ne devrait plus causer de pénurie mémoire et
 toutes les tâches devraient pouvoir s’exécuter complètement.
+ok (current()).
 
 ### Question 2
 Il est possible que malgré une exécution complète, la tâche “Adversary” indique
 un echec. En lisant le code de cette tâche dans task/adversary.c et en relisant
 le code de votre fonction munmap, indiquez ce qui peut provoquer cet echec.
+censee faire une faute de segmentation?
 
 ### Question 3
 Corrigez le problème soulevé dans la ### Question 2 à l’aide d’une fonction définie

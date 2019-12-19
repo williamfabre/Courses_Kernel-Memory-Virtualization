@@ -98,11 +98,22 @@ static inline uint64_t store_cr3(void)
 }
 
 
+// Load Task Register (ltr)
+//
+// The task register is loaded by LTR from the source
+// register or memorylocation specified by the operand. The loaded task state
+// segment is taggedbusy. A task switch does not occur.
 static inline void load_tr(uint16_t tr)
 {
 	asm volatile ("ltr %0" : : "r" (tr));
 }
 
+//Store Task Register (str)
+//
+// The contents of the task register is stored by sldt as indicated by
+// the effective address operand. STR is stored into the two-byte register or
+// the memory location
+// expl :
 static inline uint16_t store_tr(void)
 {
 	uint16_t tr;
@@ -111,6 +122,10 @@ static inline uint16_t store_tr(void)
 }
 
 
+// Invalidate Page
+//
+// Invalidate a single entry in the translation lookaside buffer.
+// expl : invlpg 5(%ebx)
 static inline void invlpg(vaddr_t vaddr)
 {
 	asm volatile ("invlpg %0" : : "m" (vaddr));
@@ -119,7 +134,11 @@ static inline void invlpg(vaddr_t vaddr)
 
 typedef uint16_t  port_t;
 
-
+//Input from Port (in,ins)
+//
+// in transfers a byte, word, or long from the immediate port into the
+// byte,word, or long memory address pointed to by the AL, AX, or EAX
+// register,respectively.
 static inline uint8_t in8(port_t port)
 {
 	uint8_t ret;
@@ -141,7 +160,11 @@ static inline uint32_t in32(port_t port)
 	return ret;
 }
 
-
+//Output from Port (out,outs)
+//
+//Transfers a byte, word, or long from the memory address pointed to by
+//thecontent of the AL, AX, or EAX register to the immediate 8-, 16-, or
+//32-bitport address.
 static inline void out8(port_t port, uint8_t val)
 {
 	asm volatile ("outb %0, %1" : : "a" (val), "dN" (port));
@@ -157,7 +180,9 @@ static inline void out32(port_t port, uint32_t val)
 	asm volatile ("outl %0, %1" : : "a" (val), "dN" (port));
 }
 
-
+//WRMSR — Write to Model Specific Register
+//
+//https://www.felixcloutier.com/x86/wrmsr
 static inline void wrmsr(uint32_t msr, uint64_t val)
 {
 	uint32_t eax, edx;

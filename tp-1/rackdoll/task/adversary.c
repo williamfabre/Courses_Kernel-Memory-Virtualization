@@ -13,15 +13,31 @@ char zero_zone[8000];
 void entry(void)
 {
 	size_t i;
-	char *addr = (char *) 0x1fffff3000;
+	//			0x2000000000
+	char *addr = (char *)	0x1fffff3000;
+	//			FFFFFFFFFFFFFF80
 
 	syscall_print("  ==> Adversary Task\n");
 
+	// 0 -> 4096
+	// (0x0 -> 0x100) = (0 -> 255) (10 fois)
 	for (i = 0; i < 0x1000; i++)
+	{
+		// 0 -> 127
+		// 18446744073709551488
+		// FFFFFFFFFFFFFF80
+
 		addr[i] = i & 0xff;
+
+		/*syscall_print("adversary addr = ");*/
+		/*syscall_printnum(addr[i]);*/
+		/*syscall_printnum(i & 0xff);*/
+		/*syscall_print("\n");*/
+	}
 
 	syscall_munmap((vaddr_t) addr);
 
+	// 0 -> 4096
 	for (i = 0; i < 0x1000; i++)
 		if (addr[i] != 0) {
 			syscall_print("  --> Adversary result: failure\n");

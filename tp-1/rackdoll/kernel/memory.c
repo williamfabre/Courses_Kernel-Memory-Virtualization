@@ -13,8 +13,8 @@
 #define offsetof(type, field)   ((size_t) &(((type *) 0)->field))
 
 #define container_of(ptr, type, member) ({ \
-                const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-                (type *)( (char *)__mptr - offsetof(type,member) );})
+					 const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+					 (type *)( (char *)__mptr - offsetof(type,member) );})
 
 
 extern __attribute__((noreturn)) void die(void);
@@ -226,28 +226,34 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 // donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
-	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
-	int index, i;
-
-	// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
-	for (i = 4; i > 1; --i)
+	// protection
+	if (vaddr > 0x40000000 && vaddr < 0x00007fffffffffff )
 	{
+		vaddr_t *cadre = (vaddr_t *)ctx->pgt;
+		int index, i;
+
+		// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
+		for (i = 4; i > 1; --i)
+		{
+			index = INDEX(vaddr, i);
+			cadre = cadre + index;
+			if (!((*cadre) & 0x1)) // l'entree est invalide
+			{
+				free_page(*cadre);
+				return;
+			}
+			cadre = (uint64_t*) (*cadre & ADDR_MASK);
+		}
+
 		index = INDEX(vaddr, i);
 		cadre = cadre + index;
-		if (!((*cadre) & 0x1)) // l'entree est invalide
+
+		if ((*cadre) & 0x1) // l'entree est valide
 		{
 			free_page(*cadre);
-			return;
 		}
-		cadre = (uint64_t*) (*cadre & ADDR_MASK);
-	}
-
-	index = INDEX(vaddr, i);
-	cadre = cadre + index;
-
-	if ((*cadre) & 0x1) // l'entree est valide
-	{
-		free_page(*cadre);
+		invlpg(vaddr);
+		/*invlpg(store_cr3());*/
 	}
 }
 
