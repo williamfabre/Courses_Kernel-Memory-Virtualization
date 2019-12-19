@@ -73,15 +73,15 @@ void tabulate_per_level(int lvl)
 void print_pgt(paddr_t pml, uint8_t lvl)
 {
 	paddr_t* cadre;
-	mask_63_11downto0(&pml);
-	//ecrasement de l'adresse du pointeur
-	cadre = (paddr_t*)pml;
+	/*mask_63_11downto0(&pml);*/
+	//ecrasement de l'adresse du pointeur et mask des bits
+	cadre = (paddr_t*)(pml & 0x0007FFFFFFFFF800);
 
 	uint32_t size = (1 << 9);
 
 	for (uint32_t i=0; i<size; i++){
 		//presence d'information dans ce cadre de page
-		if (check_1bit((paddr_t)*cadre, 1)){
+		if (*cadre & 0x1){
 			if (lvl == 4 || lvl == 3){
 				tabulate_per_level((lvl-4));
 				printk("%s page %p is present in pml%d[%d]\n", __func__, *cadre, lvl, i);
@@ -89,7 +89,7 @@ void print_pgt(paddr_t pml, uint8_t lvl)
 			}
 			if (lvl == 2){
 				// HUGE PAGE
-				if (check_1bit((paddr_t)*cadre, 7)){
+				if ((paddr_t)*cadre & 0x80){
 					tabulate_per_level((lvl-4));
 					printk("%s HUGE page data is pml%d[%d]=%p\n", __func__, lvl, i, *cadre);
 				}else{
