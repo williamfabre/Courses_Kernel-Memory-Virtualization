@@ -217,7 +217,7 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	*cadre = (paddr_t)alloc_page();
 
 	// init a 0
-	memset(cadre, 0, 4096);
+	memset(cadre, 0, PAGE_SIZE);
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
