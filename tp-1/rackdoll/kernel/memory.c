@@ -196,10 +196,7 @@ void load_task(struct task *ctx)
 	for (vaddr_t i = 0x0; i < bss_size; i+=PAGE_SIZE)
 	{
 		*cadre = (paddr_t)alloc_page();
-		/*memset(((vaddr_t*)bss_start_vaddr+i), 0, PAGE_SIZE);*/
 		map_page(ctx, bss_start_vaddr+i, *cadre+i);
-		/*map_page(ctx, bss_start_vaddr, *cadre);*/
-		/*memset(((vaddr_t*)bss_start_vaddr), 0, PAGE_SIZE);*/
 	}
 }
 
@@ -239,7 +236,6 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		cadre = cadre + index;
 		if (!((*cadre) & 0x1)) // l'entree est invalide
 		{
-			/*printk("%s Verification de fonctionnement\n", __func__);*/
 			free_page(*cadre);
 			return;
 		}
@@ -258,7 +254,8 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 void pgfault(struct interrupt_context *ctx)
 {
 	/*struct task *my_task;*/
-	struct task *my_task = (struct task *) ctx->rdi;
+	// FONCTION TROUVEE DANS TASK thanks to SMAIL
+	struct task *my_task = (struct task *) current();
 	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
 	 * fault occurs, the address the program attempted to access is stored
 	 * in the CR2 register. */
@@ -273,9 +270,7 @@ void pgfault(struct interrupt_context *ctx)
 
 	// allocation de la pile
 	if (cr2 > 0x40000000 && cr2 < 0x2000000000 ) {
-		/*printk("%s Page fault cr2 = %p\n", __func__, store_cr2());*/
 		mmap(my_task, cr2);
-		/*munmap(my_task, cr2);*/
 	} else {
 		/*Toute faute à une adresse en dehors de la pile doit causer*/
 		/*une faute de segmentation de la tâche courante*/
