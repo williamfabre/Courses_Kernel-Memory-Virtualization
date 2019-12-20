@@ -333,3 +333,67 @@ censee faire une faute de segmentation?
 ### Question 3
 Corrigez le problème soulevé dans la ### Question 2 à l’aide d’une fonction définie
 dans le fichier include/x86.h.
+
+Control Register : (https://en.wikipedia.org/wiki/Control_register)
+
+FLAGS(https://www.shsu.edu/~csc_tjm/fall2003/cs272/flags.html)
+* RFLAGS : (https://fr.wikipedia.org/wiki/RFLAGS)
+-    TF (bit 8) Trap Flag (Drapeau de trappe) : Lorsqu'il est armé, ce drapeau
+    permet le débogage en mode pas à pas, c'est-à-dire instruction par
+    instruction. Lorsqu'il est désarmé, le mode pas à pas est inopérant
+    (fonctionnement normal).
+
+-    IF (bit 9) Interrupt Flag (Drapeau d'interruption) : Ce drapeau contrôle
+    la façon dont le processeur répond aux requêtes d'interruptions masquables
+    (c'est-à-dire désactivables). Lorsqu'il est armé, le processeur peut
+    répondre à toutes les interruptions, dans le cas contraire (drapeau IF
+    désarmé), le processeur ne pourra répondre qu'aux interruptions non
+    masquables.
+
+-    IOPL (bits 12 et 13) Input / Output privilege level field (Champ de niveau
+    de privilège d'entrée et de sortie) : Ce champ indique le niveau de
+    privilège en entrée/sortie (E/S) du programme ou de la tâche courante. Le
+    niveau de privilège courant du programme ou de la tâche en cours doit être
+    égal ou inférieur au niveau de privilège d'E/S pour accéder à l'espace
+    d'adressage. Ce champ ne peut être modifié qu'avec un niveau de privilège
+    égal à 0 (niveau de privilège le plus haut). Ce concept de niveaux de
+    privilèges est implémenté au travers des anneaux de protection.
+
+-    NT (bit 14) Nested task Flag (Drapeau de tâche chaînée) : Ce drapeau
+    contrôle l'enchaînement des tâches interrompues et appelées. Il indique
+    ainsi, lorsqu'il est armé, si la tâche courante est liée à une tâche
+    parent (la tâche qui s'exécutait auparavant) via l'instruction CALL ou par
+    le biais d'une interruption. Lorsqu'il est désarmé, ce drapeau indique
+    simplement que la tâche courante n'a pas de tâche parente.
+
+-    RF (bit 16) Resume Flag (Drapeau de redémarrage) : Ce drapeau contrôle la
+    réponse du processeur aux exceptions de débogage. Il assure notamment que
+    le débogage en pas à pas (voir drapeau TF) n'intervient qu'une seule fois
+    par instruction.
+
+-    VM (bit 17) Virtual-8086 mode Flag (Drapeau de mode virtuel 8086) :
+    Lorsque ce drapeau est armé le processeur est en mode virtuel 8086.
+    Lorsqu'il est désarmé, le processeur revient en mode protégé.
+
+-    AC (bit 18) Alignment Check Flag (Drapeau de vérification d'alignement) :
+    Ce drapeau, lorsqu'il est armé, assure une vérification d'alignement des
+    références mémoire. Lorsqu'il est désarmé, aucune vérification
+    d'alignement n'est effectuée. Ce drapeau nécessite d'armer conjointement
+    le bit AM du registre de contrôle CR0.
+
+-    VIF (bit 19) Virtual Interrupt Flag (Drapeau d'interruption virtuelle) :
+    Ce drapeau est une image virtuelle du drapeau IF. Il est utilisé en
+    conjonction avec le drapeau VIP (bit 20).
+
+-    VIP (bit 20) Virtual Interrupt Pending Flag (Drapeau d'interruption
+    virtuelle en attente) : Lorsqu'il est armé ce drapeau indique qu'une
+    interruption est en attente. Lorsqu'il est désarmé ce drapeau indique
+    qu'aucune interruption n'est en attente. Seuls les programmes peuvent
+    armer ou désarmer ce drapeau, le processeur ne fait que le lire. À
+    utiliser conjointement avec le drapeau VIF (bit 19).
+
+-    ID (bit 21) Identification Flag (Drapeau d'indentification) : Si un
+    programme a la possibilité d'armer ou de désarmer ce drapeau, cela indique
+    que le processeur supporte l'utilisation de l'instruction CPUID.
+
+

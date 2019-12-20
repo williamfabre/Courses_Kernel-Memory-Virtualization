@@ -35,37 +35,30 @@
 #define MSR_EFER_FFXSR         (1ul << 14) //FFXSR (Fast FXSAVE/FXRSTOR)
 #define MSR_EFER_TCE           (1ul << 15) //TCE (Translation Cache Extension)
 
-
-
-
-
-
-
-
-
-
-
 /*
  * Rflags definitions.
+ * Le registre RFLAGS - aussi dit registre de drapeaux - est le registre d'état
+ * des processeurs de la famille x86-64 (64 bits)
  */
 
-#define RFLAGS_CF              (1ul <<  0)
-#define RFLAGS_PF              (1ul <<  2)
-#define RFLAGS_AF              (1ul <<  4)
-#define RFLAGS_ZF              (1ul <<  6)
-#define RFLAGS_SF              (1ul <<  7)
-#define RFLAGS_TF              (1ul <<  8)
-#define RFLAGS_IF              (1ul <<  9)
-#define RFLAGS_DF              (1ul << 10)
-#define RFLAGS_OF              (1ul << 11)
-#define RFLAGS_IOPL            (3ul << 12)
-#define RFLAGS_NT              (1ul << 14)
-#define RFLAGS_RF              (1ul << 16)
-#define RFLAGS_VM              (1ul << 17)
-#define RFLAGS_AC              (1ul << 18)
-#define RFLAGS_VIF             (1ul << 19)
-#define RFLAGS_VIP             (1ul << 20)
-#define RFLAGS_ID              (1ul << 21)
+#define RFLAGS_CF              (1ul <<  0) //Carry flag
+#define RFLAGS_PF              (1ul <<  2) //Parity flag
+#define RFLAGS_AF              (1ul <<  4) //Auxiliary carryflag
+#define RFLAGS_ZF              (1ul <<  6) //Zero flag
+#define RFLAGS_SF              (1ul <<  7) //Sign flag
+#define RFLAGS_TF              (1ul <<  8) //Trace flag
+#define RFLAGS_IF              (1ul <<  9) //Interrupt flag
+#define RFLAGS_DF              (1ul << 10) //Direction flag
+#define RFLAGS_OF              (1ul << 11) //Overflow flag
+#define RFLAGS_IOPL            (3ul << 12) // IOPL 12 et 13 Input / Output privilege level field
+#define RFLAGS_NT              (1ul << 14) // Nested task Flag (Drapeau de tâche chaînée)
+#define RFLAGS_RF              (1ul << 16) // Resume Flag (Drapeau de redémarrage)
+#define RFLAGS_VM              (1ul << 17) // Virtual-8086 mode Flag(Drapeau de mode virtuel 8086)
+#define RFLAGS_AC              (1ul << 18) // Alignment Check Flag
+#define RFLAGS_VIF             (1ul << 19) // Virtual Interrupt Flag
+#define RFLAGS_VIP             (1ul << 20) // Virtual Interrupt Pending
+#define RFLAGS_ID              (1ul << 21) // Identification Flag
+
 
 
 static inline void load_rsp(uint64_t rsp)
