@@ -26,14 +26,23 @@
  */
 
 #define MSR_EFER               0xc0000080
-#define MSR_EFER_SCE           (1ul <<  0)
-#define MSR_EFER_LME           (1ul <<  8)
-#define MSR_EFER_LMA           (1ul << 10)
-#define MSR_EFER_NXE           (1ul << 11)
-#define MSR_EFER_SVME          (1ul << 12)
-#define MSR_EFER_LMSLE         (1ul << 13)
-#define MSR_EFER_FFXSR         (1ul << 14)
-#define MSR_EFER_TCE           (1ul << 15)
+#define MSR_EFER_SCE           (1ul <<  0) //SCE (System Call Extensions)
+#define MSR_EFER_LME           (1ul <<  8) //LME (Long Mode Enable)
+#define MSR_EFER_LMA           (1ul << 10) //LMA (Long Mode Active)
+#define MSR_EFER_NXE           (1ul << 11) //NXE (No-Execute Enable)
+#define MSR_EFER_SVME          (1ul << 12) //SVME (Secure Virtual Machine Enable)
+#define MSR_EFER_LMSLE         (1ul << 13) //LMSLE (Long Mode Segment Limit Enable)
+#define MSR_EFER_FFXSR         (1ul << 14) //FFXSR (Fast FXSAVE/FXRSTOR)
+#define MSR_EFER_TCE           (1ul << 15) //TCE (Translation Cache Extension)
+
+
+
+
+
+
+
+
+
 
 
 /*

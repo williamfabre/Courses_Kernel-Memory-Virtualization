@@ -10,13 +10,6 @@
 #define PAGE_SIZE            0x1000
 
 
-#define offsetof(type, field)   ((size_t) &(((type *) 0)->field))
-
-#define container_of(ptr, type, member) ({ \
-					 const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-					 (type *)( (char *)__mptr - offsetof(type,member) );})
-
-
 extern __attribute__((noreturn)) void die(void);
 
 static uint64_t bitset[BITSET_SIZE];
@@ -226,8 +219,15 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 // donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
+	/*uint64_t payload_size;*/
+	uint64_t stack_start;
+	uint64_t user_seg_end;
+
+	stack_start = 0x40000000;
+	user_seg_end = 0x00007fffffffffff;
+
 	// protection
-	if (vaddr > 0x40000000 && vaddr < 0x00007fffffffffff )
+	if (vaddr > stack_start && vaddr < user_seg_end)
 	{
 		vaddr_t *cadre = (vaddr_t *)ctx->pgt;
 		int index, i;
@@ -252,8 +252,6 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		{
 			free_page(*cadre);
 		}
-		invlpg(vaddr);
-		/*invlpg(store_cr3());*/
 	}
 }
 
@@ -287,4 +285,6 @@ void pgfault(struct interrupt_context *ctx)
 
 void duplicate_task(struct task *ctx)
 {
+	/*printk("toto123\n");*/
+	fork_task(&ctx->context);
 }
