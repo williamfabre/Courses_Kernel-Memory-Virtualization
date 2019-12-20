@@ -307,7 +307,7 @@ utiliser la fonction void exit task(struct interrupt context *ctx) qui termine
 la tâche courante).
 OK
 
-### Exercice 5
+## Exercice 5
 Dans cet exercice on implémente la fonction de libération. Á cette étape du TP,
 les tâches doivent s’exécuter brièvement avant d’échouer. Des messages
 d’avertissement indiquant une pénurie mémoire doivent aussi s’afficher sur le
@@ -396,4 +396,40 @@ FLAGS(https://www.shsu.edu/~csc_tjm/fall2003/cs272/flags.html)
     programme a la possibilité d'armer ou de désarmer ce drapeau, cela indique
     que le processeur supporte l'utilisation de l'instruction CPUID.
 
+``` c
+
+objdump -s :
+
+adversary.elf:     file format elf64-x86-64
+
+Contents of section .header:
+ 2000000000 ffdec04b a6ad10ff 00000000 20000000  ...K........ ...
+ 2000000010 00100000 20000000 00300000 20000000  .... ....0.. ...
+ 2000000020 00000000 20000000 30000000 20000000  .... ...0... ...
+Contents of section .text:
+ 2000000030 49bb3801 00000000 00005348 8d1deeff  I.8.......SH....
+ 2000000040 ffff31ff 48b898ff ffffffff ffff4c01  ..1.H.........L.
+ 2000000050 db488d34 03cd8048 b80030ff ff1f0000  .H.4...H..0.....
+ 2000000060 0048ba00 40ffff1f 0000000f 1f440000  .H..@........D..
+ 2000000070 88004883 c0014839 d075f548 be0030ff  ..H...H9.u.H..0.
+ 2000000080 ff1f0000 00bf0300 0000cd80 48b8b0ff  ............H...
+ 2000000090 ffffffff ffff4889 f24531c0 41b90500  ......H..E1.A...
+ 20000000a0 000048b9 0040ffff 1f000000 4c8d1403  ..H..@......L...
+ 20000000b0 803a0074 104c89c7 4c89d6cd 804c89cf  .:.t.L..L....L..
+ 20000000c0 4c89c6cd 804883c2 014839ca 75e231d2  L....H...H9.u.1.
+ 20000000d0 bf040000 004889d6 cd8048b8 d8ffffff  .....H....H.....
+ 20000000e0 ffffffff 4889d748 8d3403cd 80bf0500  ....H..H.4......
+ 20000000f0 00004889 d6cd805b c3                 ..H....[.
+Contents of section .data:
+ 2000000100 20203d3d 3e204164 76657273 61727920    ==> Adversary
+ 2000000110 5461736b 0a000000 20202d2d 3e204164  Task....  --> Ad
+ 2000000120 76657273 61727920 72657375 6c743a20  versary result:
+ 2000000130 6661696c 7572650a 00000000 00000000  failure.........
+ 2000000140 20202d2d 3e204164 76657273 61727920    --> Adversary
+ 2000000150 72657375 6c743a20 73756363 6573730a  result: success.
+ 2000000160 00000000 00000000                    ........
+Contents of section .got.plt:
+ 2000000168 00000000 00000000 00000000 00000000  ................
+ 2000000178 00000000 00000000                    ........
+```
 

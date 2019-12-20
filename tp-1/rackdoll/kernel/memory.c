@@ -272,8 +272,10 @@ void pgfault(struct interrupt_context *ctx)
 	 * +----------------------+++0x40000000
 	 */
 
-	// allocation de la pile
-	if (cr2 > 0x40000000 && cr2 < 0x2000000000 ) {
+	// allocation de la pile TODO changer
+	/*if (cr2 > 0x40000000 && cr2 < 0x2000000000 ) {*/
+					/*0x00007fffffffffff*/
+	if (cr2 > 0x40000000 && cr2 < 0x00007fffffffffff ) {
 		mmap(my_task, cr2);
 	} else {
 		/*Toute faute à une adresse en dehors de la pile doit causer*/

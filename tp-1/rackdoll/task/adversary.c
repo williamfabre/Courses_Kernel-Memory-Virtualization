@@ -13,9 +13,9 @@ char zero_zone[8000];
 void entry(void)
 {
 	size_t i;
-	//			0x2000000000
+	//			0x2000000000 fin de stack
 	char *addr = (char *)	0x1fffff3000;
-	//			FFFFFFFFFFFFFF80
+	//			0x40000000 debut de stack
 
 	syscall_print("  ==> Adversary Task\n");
 
