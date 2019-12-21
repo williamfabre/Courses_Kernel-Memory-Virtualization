@@ -41,6 +41,9 @@ void entry(void)
 	for (i = 0; i < 0x1000; i++)
 		if (addr[i] != 0) {
 			syscall_print("  --> Adversary result: failure\n");
+			/*syscall_print("  --> Adversary result: failure ");*/
+			/*syscall_printnum(addr[i]);*/
+			/*syscall_print("\n");*/
 			syscall_exit();
 		}
 

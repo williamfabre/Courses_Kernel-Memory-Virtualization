@@ -219,7 +219,6 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 // donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
-	/*uint64_t payload_size;*/
 	uint64_t stack_start;
 	uint64_t user_seg_end;
 
@@ -229,6 +228,8 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 	// protection
 	if (vaddr > stack_start && vaddr < user_seg_end)
 	{
+		invlpg(vaddr); // invalidation de l'entree dans la TLB
+
 		vaddr_t *cadre = (vaddr_t *)ctx->pgt;
 		int index, i;
 
@@ -250,6 +251,9 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 
 		if ((*cadre) & 0x1) // l'entree est valide
 		{
+			// remise a 0 de la page quand on munmap
+			// apparemment ca corrige le probleme.
+			memset(vaddr, 0, PAGE_SIZE);
 			free_page(*cadre);
 		}
 	}

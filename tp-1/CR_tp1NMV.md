@@ -432,4 +432,13 @@ Contents of section .got.plt:
  2000000168 00000000 00000000 00000000 00000000  ................
  2000000178 00000000 00000000                    ........
 ```
+Avez-vous compris pourquoi la tâche Adversary ne fonctionne pas ?
+
+En théorie, vous devriez observer que Adversary échoue car elle lit une
+donnée présente sur une page qui s'est fait démappée, ce qui devrait
+être impossible.
+
+Ce problème est lié au TLB.
+
+
 
