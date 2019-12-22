@@ -36,7 +36,7 @@ kernel-obj := $(patsubst %, $(OBJ)kernel/%.o,   \
   entry idt main memory printk task trap vga    \
 )
 
-tasks := adversary hash sieve
+tasks := adversary hash sieve mylittlefork
 
 
 all: $(BIN)rackdoll.elf

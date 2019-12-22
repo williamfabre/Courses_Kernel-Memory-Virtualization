@@ -103,27 +103,33 @@ void free_page(paddr_t addr)
  * The user processes have to explicitely map them in order to use them.
  */
 
-// THANKS TO SOME CODE THAT I CORRECTED FROM GITHUB
 //mappe l’adresse virtuelle vaddr sur l’adresse physique paddr sur
 // un espace d’une page pour la tâche ctx
 // donne les droits 0x7
 void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 {
+	int i;
 	vaddr_t *cadre = (vaddr_t *)ctx->pgt;
-	int index, i;
-	// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
+
+
 	for (i = 4; i > 1; --i)
 	{
-		index = INDEX(vaddr, i);
-		cadre = cadre + index;
+		cadre = cadre + INDEX(vaddr, i);
 		if (!(*cadre & 0x1))// if empty or invalid
 		{
 			*cadre = (paddr_t)alloc_page() | 0x7;
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 	}
-	index = INDEX(vaddr, i);
-	cadre = cadre + index;
+
+	cadre = cadre + INDEX(vaddr, i);
+
+	if (!(*cadre & 0x1))// if empty or invalid
+	{
+		// remise a 0 d'une page
+		memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+	}
+
 	*cadre = paddr | 0x7;
 }
 
@@ -142,17 +148,11 @@ void load_task(struct task *ctx)
 	vaddr_t bss_start_vaddr;
 	paddr_t *cadre;
 
-	paddr_t pml4;
-	paddr_t pml3;
-	paddr_t pml2;
-	paddr_t pml1;
-
 	// table alloc
-	pml4 = alloc_page();
-	pml3 = alloc_page();
-	pml2 = alloc_page();
-	pml1 = alloc_page();
-
+	paddr_t pml4 = alloc_page();
+	paddr_t pml3 = alloc_page();
+	paddr_t pml2 = alloc_page();
+	paddr_t pml1 = alloc_page();
 
 	// table link and kernel ID mapping
 	((paddr_t*)pml4)[0] = pml3 | 0x7;  // pml4[0] = pml3 | U | W | P
@@ -170,14 +170,13 @@ void load_task(struct task *ctx)
 
 	// taille du "segment" code+data+text+heap
 	payload_size = ctx->load_end_paddr - ctx->load_paddr;
+
 	// adresse virtuelle de depart du bss
 	bss_start_vaddr = ctx->load_vaddr + payload_size;
 	bss_size =  ctx->bss_end_vaddr - bss_start_vaddr;
 
-
-	// map le debut du load map_page(*ctx, vaddr, paddr) potentiellement
-	// pareil il faudrait mapper size fois divise par la taille d'une page
-	for (vaddr_t i = 0; i < payload_size; i+=PAGE_SIZE)
+	// map le debut du load map_page(*ctx, vaddr, paddr)
+	for (vaddr_t i = 0x0; i < payload_size; i+=PAGE_SIZE)
 	{
 		map_page(ctx, ctx->load_vaddr+i, ctx->load_paddr+i);
 	}
@@ -188,6 +187,7 @@ void load_task(struct task *ctx)
 	for (vaddr_t i = 0x0; i < bss_size; i+=PAGE_SIZE)
 	{
 		*cadre = (paddr_t)alloc_page();
+		memset((paddr_t*)*cadre, 0, PAGE_SIZE);
 		map_page(ctx, bss_start_vaddr+i, *cadre+i);
 	}
 }
@@ -198,8 +198,9 @@ void set_task(struct task *ctx)
 	load_cr3(ctx->pgt);
 }
 
-// alloue une page physique, l’initialise à zero et la mappe à l’adresse
-// virtuelle donnée pour la tâche donnée.
+// alloue une page physique,
+// l’initialise à zero et
+// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 void mmap(struct task *ctx, vaddr_t vaddr)
 {
 	paddr_t *cadre;
@@ -207,53 +208,36 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	// alloue
 	*cadre = alloc_page();
 
+	// init a 0
+	memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
-	memset(&vaddr, 0, PAGE_SIZE);
-
 }
 
 // permet de supprimer le mapping d’une adresse virtuelle donnée pour une tâche
 // donnée.
 void munmap(struct task *ctx, vaddr_t vaddr)
 {
-	uint64_t stack_start;
-	uint64_t user_seg_end;
+	int i;
+	uint64_t stack_start = 0x40000000;
+	uint64_t user_seg_end = 0x00007fffffffffff;
 
-	stack_start = 0x40000000;
-	user_seg_end = 0x00007fffffffffff;
-
-	// protection
 	if (vaddr > stack_start && vaddr < user_seg_end)
 	{
-		invlpg(vaddr); // invalidation de l'entree dans la TLB
-
 		vaddr_t *cadre = (vaddr_t *)ctx->pgt;
-		int index, i;
 
-		// 3 jours pour debuguer de 4 downto 1 et j'avais de 4 downto 0
 		for (i = 4; i > 1; --i)
 		{
-			index = INDEX(vaddr, i);
-			cadre = cadre + index;
-			if (!((*cadre) & 0x1)) // l'entree est invalide
-			{
-				free_page(*cadre);
-				return;
-			}
+			cadre = cadre + INDEX(vaddr, i);
 			cadre = (uint64_t*) (*cadre & ADDR_MASK);
 		}
 
-		index = INDEX(vaddr, i);
-		cadre = cadre + index;
+		cadre = cadre + INDEX(vaddr, i);
+		memset(vaddr, 0, PAGE_SIZE);
+		free_page(*cadre);
 
-		if ((*cadre) & 0x1) // l'entree est valide
-		{
-			// remise a 0 de la page quand on munmap
-			// apparemment ca corrige le probleme.
-			/*memset(vaddr, 0, PAGE_SIZE);*/
-			free_page(*cadre);
-		}
+		invlpg(vaddr); // invalidation de l'entree dans la TLB
 	}
 }
 
@@ -274,9 +258,6 @@ void pgfault(struct interrupt_context *ctx)
 	 * +----------------------+++0x40000000
 	 */
 
-	// allocation de la pile TODO changer
-	/*if (cr2 > 0x40000000 && cr2 < 0x2000000000 ) {*/
-					/*0x00007fffffffffff*/
 	if (cr2 > 0x40000000 && cr2 < 0x00007fffffffffff ) {
 		mmap(my_task, cr2);
 	} else {
@@ -289,6 +270,5 @@ void pgfault(struct interrupt_context *ctx)
 
 void duplicate_task(struct task *ctx)
 {
-	/*printk("toto123\n");*/
 	fork_task(&ctx->context);
 }
