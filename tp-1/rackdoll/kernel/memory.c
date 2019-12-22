@@ -119,7 +119,6 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 		if (!(*cadre & 0x1))// if empty or invalid
 		{
 			*cadre = (paddr_t)alloc_page() | 0x7;
-			memset((paddr_t*)*cadre, 0, PAGE_SIZE);
 		}
 		cadre = (uint64_t*) (*cadre & ADDR_MASK);
 	}
@@ -208,11 +207,10 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	// alloue
 	*cadre = alloc_page();
 
-	// init a 0
-	memset((paddr_t*)*cadre, 0, PAGE_SIZE);
-
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
+	memset(&vaddr, 0, PAGE_SIZE);
+
 }
 
 // permet de supprimer le mapping d’une adresse virtuelle donnée pour une tâche
@@ -253,7 +251,7 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		{
 			// remise a 0 de la page quand on munmap
 			// apparemment ca corrige le probleme.
-			memset(vaddr, 0, PAGE_SIZE);
+			/*memset(vaddr, 0, PAGE_SIZE);*/
 			free_page(*cadre);
 		}
 	}
