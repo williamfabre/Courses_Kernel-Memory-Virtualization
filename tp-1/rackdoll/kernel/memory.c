@@ -234,7 +234,7 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		}
 
 		cadre = cadre + INDEX(vaddr, i);
-		memset(vaddr, 0, PAGE_SIZE);
+		/*memset(vaddr, 0, PAGE_SIZE);*/
 		free_page(*cadre);
 
 		invlpg(vaddr); // invalidation de l'entree dans la TLB

@@ -130,7 +130,10 @@ static inline uint16_t store_tr(void)
 // expl : invlpg 5(%ebx)
 static inline void invlpg(vaddr_t vaddr)
 {
-	asm volatile ("invlpg %0" : : "m" (vaddr));
+	//asm volatile ("invlpg %0" : : "m" (vaddr));
+	// TODO CHANGER voir mail du prof
+	asm volatile("invlpg (%0)" : : "r" (vaddr) : "memory");
+
 }
 
 
