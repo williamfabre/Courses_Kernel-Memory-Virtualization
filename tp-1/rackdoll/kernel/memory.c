@@ -127,7 +127,8 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	if (!(*cadre & 0x1))// if empty or invalid
 	{
 		// remise a 0 d'une page
-		memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+
+		memset((paddr_t*)*cadre, 0x0, PAGE_SIZE);
 	}
 
 	*cadre = paddr | 0x7;
@@ -187,7 +188,9 @@ void load_task(struct task *ctx)
 	for (vaddr_t i = 0x0; i < bss_size; i+=PAGE_SIZE)
 	{
 		*cadre = (paddr_t)alloc_page();
+
 		memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+
 		map_page(ctx, bss_start_vaddr+i, *cadre+i);
 	}
 }
@@ -209,7 +212,9 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	*cadre = alloc_page();
 
 	// init a 0
-	memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+	printk("%s avant %p\n", __func__, *((paddr_t*)*cadre));
+	memset(*((paddr_t*)cadre), 0x0, PAGE_SIZE);
+	printk("%s apres %p\n", __func__, *((paddr_t*)*cadre));
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
@@ -235,9 +240,13 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 
 		cadre = cadre + INDEX(vaddr, i);
 		/*memset(vaddr, 0, PAGE_SIZE);*/
-		free_page(*cadre);
 
-		invlpg(vaddr); // invalidation de l'entree dans la TLB
+		/*printk("%s avant %p\n", __func__,*((vaddr_t*)vaddr));*/
+
+		free_page(*cadre);
+		asm volatile("invlpg (%0)" : : "r" (vaddr) : "memory");
+
+		/*printk("%s apres %p\n", __func__,*((vaddr_t*)vaddr));*/
 	}
 }
 
@@ -246,6 +255,7 @@ void pgfault(struct interrupt_context *ctx)
 	/*struct task *my_task;*/
 	// FONCTION TROUVEE DANS TASK thanks to SMAIL
 	struct task *my_task = (struct task *) current();
+
 	/*Contains a value called Page Fault Linear Address (PFLA).  When a page
 	 * fault occurs, the address the program attempted to access is stored
 	 * in the CR2 register. */
