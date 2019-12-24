@@ -128,7 +128,10 @@ void map_page(struct task *ctx, vaddr_t vaddr, paddr_t paddr)
 	{
 		// remise a 0 d'une page
 
-		memset((paddr_t*)*cadre, 0x0, PAGE_SIZE);
+		// EFFET OK
+		/*printk("%s avant %p\n", __func__, *((paddr_t*)*cadre));*/
+		memset(((paddr_t*)*cadre), 0, PAGE_SIZE);
+		/*printk("%s apres %p\n", __func__, *((paddr_t*)*cadre));*/
 	}
 
 	*cadre = paddr | 0x7;
@@ -189,9 +192,15 @@ void load_task(struct task *ctx)
 	{
 		*cadre = (paddr_t)alloc_page();
 
-		memset((paddr_t*)*cadre, 0, PAGE_SIZE);
+		/*memset((paddr_t*)cadre, 4242, PAGE_SIZE);*/
 
 		map_page(ctx, bss_start_vaddr+i, *cadre+i);
+
+		// AUCUN EFFET VISIBLE
+		/*printk("%s avant %p\n", __func__, *((paddr_t*)*cadre));*/
+		/*memset(*((paddr_t*)*cadre), 42, PAGE_SIZE);*/
+
+		/*printk("%s apres %p\n", __func__, *((paddr_t*)*cadre));*/
 	}
 }
 
@@ -212,9 +221,9 @@ void mmap(struct task *ctx, vaddr_t vaddr)
 	*cadre = alloc_page();
 
 	// init a 0
-	printk("%s avant %p\n", __func__, *((paddr_t*)*cadre));
+	/*printk("%s avant %p\n", __func__, *((paddr_t*)*cadre));*/
 	memset(*((paddr_t*)cadre), 0x0, PAGE_SIZE);
-	printk("%s apres %p\n", __func__, *((paddr_t*)*cadre));
+	/*printk("%s apres %p\n", __func__, *((paddr_t*)*cadre));*/
 
 	// la mappe à l’adresse virtuelle donnée pour la tâche donnée.
 	map_page(ctx, vaddr, *cadre);
@@ -239,7 +248,8 @@ void munmap(struct task *ctx, vaddr_t vaddr)
 		}
 
 		cadre = cadre + INDEX(vaddr, i);
-		/*memset(vaddr, 0, PAGE_SIZE);*/
+
+		/*memset(((paddr_t*)*cadre), 0, PAGE_SIZE);*/
 
 		/*printk("%s avant %p\n", __func__,*((vaddr_t*)vaddr));*/
 
